@@ -7,6 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icons/icon-192x192.svg">
     <meta name="theme-color" content="#4285f4">
+    
     <link rel="stylesheet" href="styles.css">
     
     <!-- Firebase SDK -->
@@ -21,7 +22,7 @@
     <div class="container">
         <header>
             <h1>TaskWise</h1>
-            <p class="subtitle">A Simple PWA with Google Login</p>
+            <p class="subtitle">Manage your tasks wisely</p>
         </header>
 
         <main>
@@ -36,7 +37,7 @@
                          data-ux_mode="popup"
                          data-callback="handleCredentialResponse"
                          data-auto_prompt="false"
-                         data-use_fedcm_for_prompt="true">
+                         data-itp_support="true">
                     </div>
                     <div class="g_id_signin"
                          data-type="standard"
@@ -65,74 +66,10 @@
 
                     <div class="task-input-section">
                         <div class="add-task-form">
-                            <input type="text" id="task-input" placeholder="What needs to be done?" class="task-input">
-                            <button id="add-task-btn" class="add-task-btn">Add Task</button>
-                        </div>
-                        
-                        <div class="priority-controls">
-                            <h4 class="priority-title">Set Task Priority</h4>
-                            <div class="priority-sliders">
-                                <div class="slider-group">
-                                    <label for="importance-slider">Importance</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="importance-slider" class="priority-slider" min="1" max="3" value="1">
-                                        <span class="slider-value" id="importance-value">LOW</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="slider-group">
-                                    <label for="urgency-slider">Urgency</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="urgency-slider" class="priority-slider" min="1" max="3" value="1">
-                                        <span class="slider-value" id="urgency-value">LOW</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="slider-group">
-                                    <label for="easiness-slider">Easiness</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="easiness-slider" class="priority-slider" min="1" max="3" value="1">
-                                        <span class="slider-value" id="easiness-value">LOW</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="slider-group">
-                                    <label for="interest-slider">Interest</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="interest-slider" class="priority-slider" min="1" max="3" value="1">
-                                        <span class="slider-value" id="interest-value">LOW</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="slider-group">
-                                    <label for="dependency-slider">Dependency</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="dependency-slider" class="priority-slider" min="1" max="3" value="1">
-                                        <span class="slider-value" id="dependency-value">LOW</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="priority-score">
-                                <span class="score-label">Priority Score:</span>
-                                <span class="score-value" id="priority-score">15</span>
-                                <span class="score-max">/45</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="task-stats">
-                        <div class="stat">
-                            <span class="stat-number" id="total-tasks">0</span>
-                            <span class="stat-label">Total</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number" id="completed-tasks">0</span>
-                            <span class="stat-label">Completed</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number" id="pending-tasks">0</span>
-                            <span class="stat-label">Pending</span>
+                            <button id="add-task-btn" class="add-task-btn">
+                                <span style="margin-right: 8px;">➕</span>
+                                Add New Task
+                            </button>
                         </div>
                     </div>
 

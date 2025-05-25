@@ -12,32 +12,13 @@ class UIManager {
       userPhoto: document.getElementById('user-photo'),
       signOutBtn: document.getElementById('sign-out-btn'),
       // Task management elements
-      taskInput: document.getElementById('task-input'),
       addTaskBtn: document.getElementById('add-task-btn'),
       taskList: document.getElementById('task-list'),
       emptyState: document.getElementById('empty-state'),
-      totalTasks: document.getElementById('total-tasks'),
-      completedTasks: document.getElementById('completed-tasks'),
-      pendingTasks: document.getElementById('pending-tasks'),
-      filterBtns: document.querySelectorAll('.filter-btn'),
-      // Priority slider elements
-      importanceSlider: document.getElementById('importance-slider'),
-      urgencySlider: document.getElementById('urgency-slider'),
-      easinessSlider: document.getElementById('easiness-slider'),
-      interestSlider: document.getElementById('interest-slider'),
-      dependencySlider: document.getElementById('dependency-slider'),
-      priorityScore: document.getElementById('priority-score'),
-      sliderValues: {
-        importance: document.getElementById('importance-value'),
-        urgency: document.getElementById('urgency-value'),
-        easiness: document.getElementById('easiness-value'),
-        interest: document.getElementById('interest-value'),
-        dependency: document.getElementById('dependency-value')
-      }
+      filterBtns: document.querySelectorAll('.filter-btn')
     };
 
     this.setupEventListeners();
-    this.setupPrioritySliders();
   }
 
   setupEventListeners() {
@@ -47,18 +28,10 @@ class UIManager {
       });
     }
 
-    // Task input event listeners
+    // Add task button event listener
     if (this.elements.addTaskBtn) {
       this.elements.addTaskBtn.addEventListener('click', () => {
-        this.addTask();
-      });
-    }
-
-    if (this.elements.taskInput) {
-      this.elements.taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          this.addTask();
-        }
+        window.TaskManager.showAddTaskModal();
       });
     }
 
@@ -70,25 +43,11 @@ class UIManager {
     });
   }
 
-  addTask() {
-    const taskText = this.elements.taskInput.value.trim();
-    if (taskText) {
-      window.TaskManager.addTask(taskText);
-      this.elements.taskInput.value = '';
-    }
-  }
-
   setActiveFilter(filter) {
     this.elements.filterBtns.forEach(btn => {
       btn.classList.toggle('active', btn.dataset.filter === filter);
     });
     window.TaskManager.setFilter(filter);
-  }
-
-  updateTaskStats(total, completed, pending) {
-    if (this.elements.totalTasks) this.elements.totalTasks.textContent = total;
-    if (this.elements.completedTasks) this.elements.completedTasks.textContent = completed;
-    if (this.elements.pendingTasks) this.elements.pendingTasks.textContent = pending;
   }
 
   showEmptyState(show = true) {
@@ -146,99 +105,6 @@ class UIManager {
       case 3: return 'HIGH';
       default: return 'LOW';
     }
-  }
-
-  setupPrioritySliders() {
-    const sliders = [
-      { element: this.elements.importanceSlider, valueElement: this.elements.sliderValues.importance },
-      { element: this.elements.urgencySlider, valueElement: this.elements.sliderValues.urgency },
-      { element: this.elements.easinessSlider, valueElement: this.elements.sliderValues.easiness },
-      { element: this.elements.interestSlider, valueElement: this.elements.sliderValues.interest },
-      { element: this.elements.dependencySlider, valueElement: this.elements.sliderValues.dependency }
-    ];
-
-    sliders.forEach(({ element, valueElement }) => {
-      if (element && valueElement) {
-        element.addEventListener('input', (e) => {
-          valueElement.textContent = this.getSliderValueText(e.target.value);
-          this.updatePriorityScore();
-        });
-      }
-    });
-
-    // Initial score calculation
-    this.updatePriorityScore();
-  }
-
-  updatePriorityScore() {
-    const importance = parseInt(this.elements.importanceSlider?.value || 1);
-    const urgency = parseInt(this.elements.urgencySlider?.value || 1);
-    const easiness = parseInt(this.elements.easinessSlider?.value || 1);
-    const interest = parseInt(this.elements.interestSlider?.value || 1);
-    const dependency = parseInt(this.elements.dependencySlider?.value || 1);
-
-    // Weighted scoring system: Importance > Urgency > Easiness > Interest > Dependency
-    const weights = {
-      importance: 5,   // Most important factor
-      urgency: 4,      // Second most important
-      easiness: 3,     // Third most important
-      interest: 2,     // Fourth most important
-      dependency: 1    // Least important factor
-    };
-
-    const weightedScore = (
-      (importance * weights.importance) +
-      (urgency * weights.urgency) +
-      (easiness * weights.easiness) +
-      (interest * weights.interest) +
-      (dependency * weights.dependency)
-    );
-
-    // Maximum possible score: (3*5) + (3*4) + (3*3) + (3*2) + (3*1) = 15+12+9+6+3 = 45
-    const maxScore = 45;
-    
-    if (this.elements.priorityScore) {
-      this.elements.priorityScore.textContent = weightedScore;
-    }
-
-    return {
-      importance,
-      urgency,
-      easiness,
-      interest,
-      dependency,
-      totalScore: weightedScore,
-      maxScore
-    };
-  }
-
-  getPriorityValues() {
-    return this.updatePriorityScore();
-  }
-
-  resetPrioritySliders() {
-    const sliders = [
-      this.elements.importanceSlider,
-      this.elements.urgencySlider,
-      this.elements.easinessSlider,
-      this.elements.interestSlider,
-      this.elements.dependencySlider
-    ];
-
-    sliders.forEach(slider => {
-      if (slider) {
-        slider.value = 1;
-      }
-    });
-
-    // Update displayed values
-    Object.values(this.elements.sliderValues).forEach(valueElement => {
-      if (valueElement) {
-        valueElement.textContent = 'LOW';
-      }
-    });
-
-    this.updatePriorityScore();
   }
 
   logOriginInfo() {

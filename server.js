@@ -21,9 +21,8 @@ app.use(securityHeaders);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from public directory and root
+// Serve static files only from public directory
 app.use(express.static('public'));
-app.use(express.static('.'));
 
 // Use PWA routes
 app.use('/', pwaRoutes);

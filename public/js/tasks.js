@@ -8,70 +8,98 @@ class TaskManager {
   }
 
   setUser(userId) {
+    console.log('TaskManager: Setting user ID:', userId);
     this.userId = userId;
     this.setupRealtimeListener();
   }
 
   setupRealtimeListener() {
     if (!this.userId || !window.FirebaseManager.isInitialized()) {
+      console.warn('TaskManager: Cannot setup listener - missing userId or Firebase not initialized');
+      console.log('UserId:', this.userId);
+      console.log('Firebase initialized:', window.FirebaseManager.isInitialized());
       return;
     }
 
-    const db = window.FirebaseManager.getFirestore();
-    const tasksRef = db.collection('users').doc(this.userId).collection('tasks');
+    try {
+      const db = window.FirebaseManager.getFirestore();
+      const tasksRef = db.collection('users').doc(this.userId).collection('tasks');
 
-    // Set up real-time listener
-    this.unsubscribe = tasksRef.orderBy('createdAt', 'desc').onSnapshot(
-      (snapshot) => {
-        this.tasks = [];
-        snapshot.forEach((doc) => {
-          this.tasks.push({
-            id: doc.id,
-            ...doc.data()
+      console.log('TaskManager: Setting up Firestore listener for user:', this.userId);
+
+      // Set up real-time listener
+      this.unsubscribe = tasksRef.orderBy('createdAt', 'desc').onSnapshot(
+        (snapshot) => {
+          console.log('TaskManager: Received Firestore snapshot with', snapshot.size, 'documents');
+          this.tasks = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log('TaskManager: Loading task:', doc.id, data);
+            this.tasks.push({
+              id: doc.id,
+              ...data
+            });
           });
-        });
-        this.renderTasks();
-        this.updateStats();
-      },
-      (error) => {
-        console.error('Error listening to tasks:', error);
-        window.UI.showError('Failed to sync tasks. Please check your connection.');
-      }
-    );
+          console.log('TaskManager: Total tasks loaded:', this.tasks.length);
+          this.renderTasks();
+          this.updateStats();
+        },
+        (error) => {
+          console.error('TaskManager: Error listening to tasks:', error);
+          console.error('TaskManager: Error code:', error.code);
+          console.error('TaskManager: Error message:', error.message);
+          
+          // Show specific error messages
+          if (error.code === 'permission-denied') {
+            window.UI.showError('Permission denied. Please check Firestore security rules.');
+          } else if (error.code === 'unavailable') {
+            window.UI.showError('Firestore is currently unavailable. Please try again later.');
+          } else {
+            window.UI.showError('Failed to sync tasks. Please check your connection.');
+          }
+        }
+      );
+    } catch (error) {
+      console.error('TaskManager: Error setting up listener:', error);
+      window.UI.showError('Failed to connect to database.');
+    }
   }
 
-  async addTask(text) {
-    if (!text.trim() || !this.userId) return;
+  async addTask(text, priority) {
+    if (!text.trim() || !this.userId) {
+      console.warn('TaskManager: Cannot add task - missing text or userId');
+      return;
+    }
 
     try {
-      // Get priority values from UI
-      const priorityData = window.UI.getPriorityValues();
+      console.log('TaskManager: Adding task for user:', this.userId);
       
       const db = window.FirebaseManager.getFirestore();
       const tasksRef = db.collection('users').doc(this.userId).collection('tasks');
       
-      await tasksRef.add({
+      const taskData = {
         text: text.trim(),
         completed: false,
-        priority: {
-          importance: priorityData.importance,
-          urgency: priorityData.urgency,
-          easiness: priorityData.easiness,
-          interest: priorityData.interest,
-          dependency: priorityData.dependency,
-          totalScore: priorityData.totalScore
-        },
+        priority: priority,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      };
 
-      // Reset priority sliders after adding task
-      window.UI.resetPrioritySliders();
+      console.log('TaskManager: Task data to be saved:', taskData);
       
-      console.log('Task added successfully with priority score:', priorityData.totalScore);
+      const docRef = await tasksRef.add(taskData);
+      console.log('TaskManager: Task added successfully with ID:', docRef.id);
+      
     } catch (error) {
-      console.error('Error adding task:', error);
-      window.UI.showError('Failed to add task. Please try again.');
+      console.error('TaskManager: Error adding task:', error);
+      console.error('TaskManager: Error code:', error.code);
+      console.error('TaskManager: Error message:', error.message);
+      
+      if (error.code === 'permission-denied') {
+        window.UI.showError('Permission denied. Cannot save task to database.');
+      } else {
+        window.UI.showError('Failed to add task. Please try again.');
+      }
     }
   }
 
@@ -112,17 +140,24 @@ class TaskManager {
     }
   }
 
-  async editTask(taskId, newText) {
+  async editTask(taskId, newText, newPriority = null) {
     if (!newText.trim() || !this.userId) return;
 
     try {
       const db = window.FirebaseManager.getFirestore();
       const taskRef = db.collection('users').doc(this.userId).collection('tasks').doc(taskId);
       
-      await taskRef.update({
+      const updateData = {
         text: newText.trim(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      };
+
+      // Update priority if provided
+      if (newPriority) {
+        updateData.priority = newPriority;
+      }
+      
+      await taskRef.update(updateData);
 
       console.log('Task updated successfully');
     } catch (error) {
@@ -273,63 +308,272 @@ class TaskManager {
     });
   }
 
+  showAddTaskModal() {
+    this.createTaskModal(null);
+  }
+
   startEditTask(taskId) {
     const task = this.tasks.find(t => t.id === taskId);
     if (!task) return;
-
-    const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
-    const taskTextElement = taskElement.querySelector('.task-text');
     
-    // Create edit input
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = task.text;
-    input.className = 'task-edit-input';
-    input.style.cssText = `
-      width: 100%;
-      padding: 8px;
-      border: 2px solid #4285f4;
-      border-radius: 4px;
-      font-size: 1rem;
-      outline: none;
-    `;
-
-    // Replace text with input
-    taskTextElement.replaceWith(input);
-    input.focus();
-    input.select();
-
-    // Handle save/cancel
-    const saveEdit = () => {
-      const newText = input.value.trim();
-      if (newText && newText !== task.text) {
-        this.editTask(taskId, newText);
-      } else {
-        this.cancelEdit();
-      }
-    };
-
-    const cancelEdit = () => {
-      const newTaskText = document.createElement('p');
-      newTaskText.className = 'task-text';
-      newTaskText.textContent = task.text;
-      input.replaceWith(newTaskText);
-    };
-
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') saveEdit();
-      if (e.key === 'Escape') cancelEdit();
-    });
-
-    input.addEventListener('blur', saveEdit);
+    this.createTaskModal(task);
   }
 
-  confirmDeleteTask(taskId) {
-    const task = this.tasks.find(t => t.id === taskId);
-    if (!task) return;
+  createTaskModal(task = null) {
+    const isEditing = task !== null;
+    const priority = task?.priority || { importance: 1, urgency: 1, easiness: 1, interest: 1, dependency: 1, totalScore: 15 };
 
-    if (confirm(`Are you sure you want to delete "${task.text}"?`)) {
-      this.deleteTask(taskId);
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'task-modal-overlay';
+    modalOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    `;
+
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.className = 'task-modal';
+    modal.style.cssText = `
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    `;
+
+    modal.innerHTML = `
+      <h3 style="margin: 0 0 20px 0; color: #333;">
+        ${isEditing ? 'Edit Task' : 'Add New Task'}
+      </h3>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Task Text:</label>
+        <input type="text" id="task-text" value="${isEditing ? this.escapeHtml(task.text) : ''}" 
+               placeholder="What needs to be done?"
+               style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; outline: none;">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin: 0 0 15px 0; color: #495057;">Priority Settings</h4>
+        
+        <div style="display: grid; gap: 15px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Importance</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="range" id="modal-importance" min="1" max="3" value="${priority.importance}" 
+                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
+              <span id="modal-importance-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.importance)}</span>
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Urgency</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="range" id="modal-urgency" min="1" max="3" value="${priority.urgency}" 
+                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
+              <span id="modal-urgency-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.urgency)}</span>
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Easiness</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="range" id="modal-easiness" min="1" max="3" value="${priority.easiness}" 
+                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
+              <span id="modal-easiness-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.easiness)}</span>
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Interest</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="range" id="modal-interest" min="1" max="3" value="${priority.interest}" 
+                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
+              <span id="modal-interest-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.interest)}</span>
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Dependency</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="range" id="modal-dependency" min="1" max="3" value="${priority.dependency}" 
+                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
+              <span id="modal-dependency-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.dependency)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+          <span style="font-weight: 500; color: #495057;">Priority Score: </span>
+          <span id="modal-priority-score" style="font-size: 1.2rem; font-weight: 700; color: #4285f4;">${priority.totalScore}</span>
+          <span style="color: #6c757d;">/45</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="modal-cancel-btn" style="padding: 10px 20px; border: 2px solid #6c757d; background: white; color: #6c757d; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Cancel</button>
+        <button id="modal-save-btn" style="padding: 10px 20px; border: none; background: #4285f4; color: white; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+          ${isEditing ? 'Save Changes' : 'Add Task'}
+        </button>
+      </div>
+    `;
+
+    modalOverlay.appendChild(modal);
+    document.body.appendChild(modalOverlay);
+
+    // Setup event listeners
+    this.setupTaskModalListeners(task, modalOverlay);
+
+    // Focus on text input
+    document.getElementById('task-text').focus();
+    if (isEditing) {
+      document.getElementById('task-text').select();
+    }
+  }
+
+  setupTaskModalListeners(task, modalOverlay) {
+    const isEditing = task !== null;
+    
+    const sliders = [
+      { slider: 'modal-importance', value: 'modal-importance-value' },
+      { slider: 'modal-urgency', value: 'modal-urgency-value' },
+      { slider: 'modal-easiness', value: 'modal-easiness-value' },
+      { slider: 'modal-interest', value: 'modal-interest-value' },
+      { slider: 'modal-dependency', value: 'modal-dependency-value' }
+    ];
+
+    // Setup slider listeners
+    sliders.forEach(({ slider, value }) => {
+      const sliderElement = document.getElementById(slider);
+      const valueElement = document.getElementById(value);
+      
+      sliderElement.addEventListener('input', (e) => {
+        valueElement.textContent = this.getPriorityText(e.target.value);
+        this.updateModalPriorityScore();
+      });
+    });
+
+    // Save button
+    document.getElementById('modal-save-btn').addEventListener('click', () => {
+      if (isEditing) {
+        this.saveEditedTask(task.id, modalOverlay);
+      } else {
+        this.saveNewTask(modalOverlay);
+      }
+    });
+
+    // Cancel button
+    document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+      this.closeTaskModal(modalOverlay);
+    });
+
+    // Close on overlay click
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        this.closeTaskModal(modalOverlay);
+      }
+    });
+
+    // Close on escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        this.closeTaskModal(modalOverlay);
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+
+    // Enter key to save
+    document.getElementById('task-text').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        if (isEditing) {
+          this.saveEditedTask(task.id, modalOverlay);
+        } else {
+          this.saveNewTask(modalOverlay);
+        }
+      }
+    });
+  }
+
+  updateModalPriorityScore() {
+    const importance = parseInt(document.getElementById('modal-importance').value);
+    const urgency = parseInt(document.getElementById('modal-urgency').value);
+    const easiness = parseInt(document.getElementById('modal-easiness').value);
+    const interest = parseInt(document.getElementById('modal-interest').value);
+    const dependency = parseInt(document.getElementById('modal-dependency').value);
+
+    // Weighted scoring system
+    const weights = { importance: 5, urgency: 4, easiness: 3, interest: 2, dependency: 1 };
+    const totalScore = (importance * weights.importance) + (urgency * weights.urgency) + 
+                      (easiness * weights.easiness) + (interest * weights.interest) + 
+                      (dependency * weights.dependency);
+
+    document.getElementById('modal-priority-score').textContent = totalScore;
+  }
+
+  async saveNewTask(modalOverlay) {
+    const text = document.getElementById('task-text').value.trim();
+    
+    if (!text) {
+      window.UI.showError('Task text cannot be empty.');
+      return;
+    }
+
+    const priority = this.getModalPriorityData();
+    await this.addTask(text, priority);
+    this.closeTaskModal(modalOverlay);
+  }
+
+  async saveEditedTask(taskId, modalOverlay) {
+    const newText = document.getElementById('task-text').value.trim();
+    
+    if (!newText) {
+      window.UI.showError('Task text cannot be empty.');
+      return;
+    }
+
+    const newPriority = this.getModalPriorityData();
+    await this.editTask(taskId, newText, newPriority);
+    this.closeTaskModal(modalOverlay);
+  }
+
+  getModalPriorityData() {
+    const importance = parseInt(document.getElementById('modal-importance').value);
+    const urgency = parseInt(document.getElementById('modal-urgency').value);
+    const easiness = parseInt(document.getElementById('modal-easiness').value);
+    const interest = parseInt(document.getElementById('modal-interest').value);
+    const dependency = parseInt(document.getElementById('modal-dependency').value);
+
+    const weights = { importance: 5, urgency: 4, easiness: 3, interest: 2, dependency: 1 };
+    const totalScore = (importance * weights.importance) + (urgency * weights.urgency) + 
+                      (easiness * weights.easiness) + (interest * weights.interest) + 
+                      (dependency * weights.dependency);
+
+    return {
+      importance,
+      urgency,
+      easiness,
+      interest,
+      dependency,
+      totalScore
+    };
+  }
+
+  closeTaskModal(modalOverlay) {
+    if (modalOverlay && modalOverlay.parentNode) {
+      modalOverlay.parentNode.removeChild(modalOverlay);
     }
   }
 

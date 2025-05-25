@@ -1,13 +1,16 @@
 const config = require('../config');
 
 const securityHeaders = (req, res, next) => {
-  // Allow cross-origin for Google Sign-In
+  // Updated COOP/COEP headers for better Google Sign-In compatibility
   res.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
   
+  // Remove problematic headers for Google Sign-In
+  res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
   // Security headers
   res.header('X-Content-Type-Options', 'nosniff');
-  res.header('X-Frame-Options', 'DENY');
+  res.header('X-Frame-Options', 'SAMEORIGIN'); // Changed from DENY to SAMEORIGIN for Google Sign-In
   res.header('X-XSS-Protection', '1; mode=block');
   
   // CORS headers

@@ -39,9 +39,35 @@ class TaskWiseApp {
     try {
       window.FirebaseManager.init();
       console.log('Firebase initialized successfully');
+      
+      // Test Firestore connection
+      await this.testFirestoreConnection();
     } catch (error) {
       console.error('Firebase initialization failed:', error);
       throw error;
+    }
+  }
+
+  async testFirestoreConnection() {
+    try {
+      console.log('Testing Firestore connection...');
+      const db = window.FirebaseManager.getFirestore();
+      
+      // Try to read from a test collection
+      const testDoc = await db.collection('test').doc('connection').get();
+      console.log('Firestore connection test successful. Doc exists:', testDoc.exists);
+      
+      // Try to write a test document
+      await db.collection('test').doc('connection').set({
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        test: 'connection successful'
+      });
+      console.log('Firestore write test successful');
+      
+    } catch (error) {
+      console.error('Firestore connection test failed:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
     }
   }
 

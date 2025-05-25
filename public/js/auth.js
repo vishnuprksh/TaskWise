@@ -14,6 +14,7 @@ class AuthManager {
   constructor() {
     this.isInitialized = false;
     this.user = null;
+    this.firebaseUser = null;
   }
 
   async initialize(clientId) {
@@ -25,8 +26,9 @@ class AuthManager {
       google.accounts.id.initialize({
         client_id: clientId,
         callback: window.handleCredentialResponse, // Use global function
-        ux_mode: "popup",
-        auto_select: false
+        ux_mode: "popup", // Back to popup mode with proper server headers
+        auto_select: false,
+        itp_support: true // Add support for Intelligent Tracking Prevention
       });
 
       // Also render the button programmatically to ensure it works
@@ -43,31 +45,77 @@ class AuthManager {
       );
 
       this.isInitialized = true;
-      console.log('Google Sign-In initialized successfully from origin:', window.location.origin);
+      console.log('Google Sign-In initialized successfully with popup mode');
     } catch (error) {
       console.error('Error initializing Google Sign-In:', error);
-      console.error('Origin during error:', window.location.origin);
       
-      // Handle specific origin error
-      if (error.message && error.message.includes('origin')) {
-        console.error('GOOGLE OAUTH CONFIGURATION ISSUE:');
-        console.error('The current origin is not authorized for this Google OAuth client.');
-        console.error('Please add the following origins to your Google Cloud Console:');
-        console.error('- http://127.0.0.1:3000');
-        console.error('- http://localhost:3000');
-        console.error('Go to: https://console.cloud.google.com/apis/credentials');
-        
-        // Show user-friendly error
-        if (window.UI) {
-          window.UI.showError('Google Sign-In configuration error. Please check the console for details.');
-        }
-      }
-      
-      throw error;
+      // Try fallback initialization without COOP-sensitive features
+      this.initializeFallback(clientId);
     }
   }
 
-  handleCredentialResponse(response) {
+  async initializeFallback(clientId) {
+    try {
+      console.log('Attempting fallback Google Sign-In initialization...');
+      
+      // Fallback: Use simpler initialization
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: window.handleCredentialResponse,
+        auto_select: false
+      });
+
+      // Render button with basic settings
+      google.accounts.id.renderButton(
+        document.querySelector('.g_id_signin'),
+        { 
+          type: "standard",
+          size: "large"
+        }
+      );
+
+      this.isInitialized = true;
+      console.log('Google Sign-In fallback initialization successful');
+    } catch (fallbackError) {
+      console.error('Fallback initialization also failed:', fallbackError);
+      this.handleInitializationError(fallbackError);
+    }
+  }
+
+  handleInitializationError(error) {
+    console.error('Origin during error:', window.location.origin);
+    
+    // Handle specific origin error
+    if (error.message && error.message.includes('origin')) {
+      console.error('GOOGLE OAUTH CONFIGURATION ISSUE:');
+      console.error('The current origin is not authorized for this Google OAuth client.');
+      console.error('Please add the following origins to your Google Cloud Console:');
+      console.error('- http://127.0.0.1:3000');
+      console.error('- http://localhost:3000');
+      console.error('Go to: https://console.cloud.google.com/apis/credentials');
+      
+      // Show user-friendly error
+      if (window.UI) {
+        window.UI.showError('Google Sign-In configuration error. Please check the console for details.');
+      }
+    } else if (error.message && error.message.includes('Cross-Origin')) {
+      console.error('CROSS-ORIGIN POLICY ISSUE:');
+      console.error('Browser security policies are blocking Google Sign-In.');
+      console.error('This may be due to COOP/COEP headers or browser settings.');
+      
+      if (window.UI) {
+        window.UI.showError('Browser security settings are blocking sign-in. Please try refreshing or using a different browser.');
+      }
+    } else {
+      if (window.UI) {
+        window.UI.showError('Google Sign-In failed to initialize. Please refresh the page.');
+      }
+    }
+    
+    throw error;
+  }
+
+  async handleCredentialResponse(response) {
     try {
       const responsePayload = this.decodeJwtResponse(response.credential);
       
@@ -85,7 +133,7 @@ class AuthManager {
       this.setUser(userInfo);
       
       // Initialize Firebase auth and TaskManager with user
-      this.initializeFirebaseAuth(userInfo);
+      await this.initializeFirebaseAuth(userInfo, response.credential);
       
       window.UI.showHomePage(userInfo);
     } catch (error) {
@@ -94,9 +142,21 @@ class AuthManager {
     }
   }
 
-  async initializeFirebaseAuth(userInfo) {
+  async initializeFirebaseAuth(userInfo, credential) {
     try {
       if (window.FirebaseManager.isInitialized()) {
+        // Create a custom token for Firebase auth using the Google credential
+        // For now, we'll use the Google user ID directly
+        console.log('Setting up Firebase auth for user:', userInfo.name);
+        
+        // Store the Firebase user info
+        this.firebaseUser = {
+          uid: userInfo.id,
+          displayName: userInfo.name,
+          email: userInfo.email,
+          photoURL: userInfo.picture
+        };
+        
         // Set up TaskManager with user ID
         window.TaskManager.setUser(userInfo.id);
         console.log('Firebase auth initialized for user:', userInfo.name);
