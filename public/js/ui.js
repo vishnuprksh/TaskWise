@@ -10,7 +10,16 @@ class UIManager {
       homeSection: document.getElementById('home-section'),
       userName: document.getElementById('user-name'),
       userPhoto: document.getElementById('user-photo'),
-      signOutBtn: document.getElementById('sign-out-btn')
+      signOutBtn: document.getElementById('sign-out-btn'),
+      // Task management elements
+      taskInput: document.getElementById('task-input'),
+      addTaskBtn: document.getElementById('add-task-btn'),
+      taskList: document.getElementById('task-list'),
+      emptyState: document.getElementById('empty-state'),
+      totalTasks: document.getElementById('total-tasks'),
+      completedTasks: document.getElementById('completed-tasks'),
+      pendingTasks: document.getElementById('pending-tasks'),
+      filterBtns: document.querySelectorAll('.filter-btn')
     };
 
     this.setupEventListeners();
@@ -21,6 +30,55 @@ class UIManager {
       this.elements.signOutBtn.addEventListener('click', () => {
         window.AuthManager.signOut();
       });
+    }
+
+    // Task input event listeners
+    if (this.elements.addTaskBtn) {
+      this.elements.addTaskBtn.addEventListener('click', () => {
+        this.addTask();
+      });
+    }
+
+    if (this.elements.taskInput) {
+      this.elements.taskInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          this.addTask();
+        }
+      });
+    }
+
+    // Filter button event listeners
+    this.elements.filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setActiveFilter(btn.dataset.filter);
+      });
+    });
+  }
+
+  addTask() {
+    const taskText = this.elements.taskInput.value.trim();
+    if (taskText) {
+      window.TaskManager.addTask(taskText);
+      this.elements.taskInput.value = '';
+    }
+  }
+
+  setActiveFilter(filter) {
+    this.elements.filterBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    window.TaskManager.setFilter(filter);
+  }
+
+  updateTaskStats(total, completed, pending) {
+    if (this.elements.totalTasks) this.elements.totalTasks.textContent = total;
+    if (this.elements.completedTasks) this.elements.completedTasks.textContent = completed;
+    if (this.elements.pendingTasks) this.elements.pendingTasks.textContent = pending;
+  }
+
+  showEmptyState(show = true) {
+    if (this.elements.emptyState) {
+      this.elements.emptyState.style.display = show ? 'block' : 'none';
     }
   }
 

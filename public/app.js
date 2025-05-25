@@ -9,6 +9,9 @@ class TaskWiseApp {
       // Log origin information for debugging
       window.UI.logOriginInfo();
 
+      // Initialize Firebase first
+      await this.initializeFirebase();
+
       // Initialize UI manager
       window.UI.init();
 
@@ -32,6 +35,16 @@ class TaskWiseApp {
     }
   }
 
+  async initializeFirebase() {
+    try {
+      window.FirebaseManager.init();
+      console.log('Firebase initialized successfully');
+    } catch (error) {
+      console.error('Firebase initialization failed:', error);
+      throw error;
+    }
+  }
+
   async initializeGoogleSignIn() {
     // Wait for Google API to load
     return new Promise((resolve, reject) => {
@@ -51,6 +64,12 @@ class TaskWiseApp {
   checkLoginStatus() {
     if (window.AuthManager.isLoggedIn()) {
       const userInfo = window.AuthManager.getUser();
+      
+      // Initialize TaskManager with user if Firebase is ready
+      if (window.FirebaseManager.isInitialized()) {
+        window.TaskManager.setUser(userInfo.id);
+      }
+      
       window.UI.showHomePage(userInfo);
     } else {
       window.UI.showLoginPage();

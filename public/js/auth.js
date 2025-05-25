@@ -67,10 +67,26 @@ class AuthManager {
       };
       
       this.setUser(userInfo);
+      
+      // Initialize Firebase auth and TaskManager with user
+      this.initializeFirebaseAuth(userInfo);
+      
       window.UI.showHomePage(userInfo);
     } catch (error) {
       console.error('Error handling credential response:', error);
       window.UI.showError('Login failed. Please try again.');
+    }
+  }
+
+  async initializeFirebaseAuth(userInfo) {
+    try {
+      if (window.FirebaseManager.isInitialized()) {
+        // Set up TaskManager with user ID
+        window.TaskManager.setUser(userInfo.id);
+        console.log('Firebase auth initialized for user:', userInfo.name);
+      }
+    } catch (error) {
+      console.error('Error initializing Firebase auth:', error);
     }
   }
 
@@ -103,6 +119,11 @@ class AuthManager {
   }
 
   signOut() {
+    // Clean up TaskManager data
+    if (window.TaskManager) {
+      window.TaskManager.cleanup();
+    }
+    
     this.user = null;
     localStorage.removeItem('userInfo');
     localStorage.removeItem('isLoggedIn');
