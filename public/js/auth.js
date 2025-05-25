@@ -47,6 +47,22 @@ class AuthManager {
     } catch (error) {
       console.error('Error initializing Google Sign-In:', error);
       console.error('Origin during error:', window.location.origin);
+      
+      // Handle specific origin error
+      if (error.message && error.message.includes('origin')) {
+        console.error('GOOGLE OAUTH CONFIGURATION ISSUE:');
+        console.error('The current origin is not authorized for this Google OAuth client.');
+        console.error('Please add the following origins to your Google Cloud Console:');
+        console.error('- http://127.0.0.1:3000');
+        console.error('- http://localhost:3000');
+        console.error('Go to: https://console.cloud.google.com/apis/credentials');
+        
+        // Show user-friendly error
+        if (window.UI) {
+          window.UI.showError('Google Sign-In configuration error. Please check the console for details.');
+        }
+      }
+      
       throw error;
     }
   }

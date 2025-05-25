@@ -24,9 +24,9 @@ class FirebaseManager {
       this.auth = firebase.auth();
       this.db = firebase.firestore();
 
-      // Configure Firestore settings
+      // Configure Firestore settings with merge option to avoid warning
       this.db.settings({
-        timestampsInSnapshots: true
+        merge: true
       });
 
       this.initialized = true;
