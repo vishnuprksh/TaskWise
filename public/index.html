@@ -20,16 +20,11 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>TaskWise</h1>
-            <p class="subtitle">Manage your tasks wisely</p>
-        </header>
-
         <main>
             <!-- Login Section -->
             <div id="login-section" class="section">
                 <div class="login-card">
-                    <h2>Welcome</h2>
+                    <h2>Welcome to TaskWise</h2>
                     <p>Please sign in to continue</p>
                     <div id="g_id_onload"
                          data-client_id="658595013531-o5h6hofpdhj08pspidrqrqsdb2n5s64n.apps.googleusercontent.com"
@@ -53,15 +48,16 @@
             <!-- Home Section (hidden initially) -->
             <div id="home-section" class="section hidden">
                 <div class="task-manager">
-                    <div class="user-header">
-                        <div class="user-info">
-                            <img id="user-photo" src="" alt="User Photo" class="user-photo">
-                            <div class="user-details">
-                                <h2>Welcome back, <span id="user-name"></span>!</h2>
-                                <p class="user-subtitle">Let's get things done</p>
-                            </div>
+                    <!-- Simplified header with profile in top right -->
+                    <div class="app-header">
+                        <div class="app-branding">
+                            <h1>TaskWise</h1>
+                            <p class="tagline">Manage your tasks wisely</p>
                         </div>
-                        <button id="sign-out-btn" class="sign-out-btn">Sign Out</button>
+                        <div class="user-profile">
+                            <img id="user-photo" src="" alt="User Photo" class="user-photo">
+                            <button id="sign-out-btn" class="sign-out-btn">Sign Out</button>
+                        </div>
                     </div>
 
                     <div class="task-input-section">
