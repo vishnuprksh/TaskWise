@@ -44,17 +44,31 @@ class TaskManager {
     if (!text.trim() || !this.userId) return;
 
     try {
+      // Get priority values from UI
+      const priorityData = window.UI.getPriorityValues();
+      
       const db = window.FirebaseManager.getFirestore();
       const tasksRef = db.collection('users').doc(this.userId).collection('tasks');
       
       await tasksRef.add({
         text: text.trim(),
         completed: false,
+        priority: {
+          importance: priorityData.importance,
+          urgency: priorityData.urgency,
+          easiness: priorityData.easiness,
+          interest: priorityData.interest,
+          dependency: priorityData.dependency,
+          totalScore: priorityData.totalScore
+        },
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      console.log('Task added successfully');
+      // Reset priority sliders after adding task
+      window.UI.resetPrioritySliders();
+      
+      console.log('Task added successfully with priority score:', priorityData.totalScore);
     } catch (error) {
       console.error('Error adding task:', error);
       window.UI.showError('Failed to add task. Please try again.');
@@ -133,6 +147,53 @@ class TaskManager {
     }
   }
 
+  sortTasksByPriority(tasks) {
+    return tasks.sort((a, b) => {
+      // First, sort by completion status (pending tasks first)
+      if (a.completed !== b.completed) {
+        return a.completed - b.completed;
+      }
+      
+      // For tasks with same completion status, sort by priority score (highest first)
+      const aPriority = a.priority?.totalScore || 15; // Default weighted score if no priority (minimum weighted score)
+      const bPriority = b.priority?.totalScore || 15;
+      
+      if (aPriority !== bPriority) {
+        return bPriority - aPriority; // Higher priority first
+      }
+      
+      // If priority scores are equal, sort by creation date (newest first)
+      const aDate = a.createdAt?.toDate?.() || new Date(0);
+      const bDate = b.createdAt?.toDate?.() || new Date(0);
+      return bDate - aDate;
+    });
+  }
+
+  getPriorityLevel(totalScore) {
+    if (totalScore >= 33) return 'high';   // Adjusted for new weighted range (33-45)
+    if (totalScore >= 24) return 'medium'; // Adjusted for new weighted range (24-32)
+    return 'low';                          // Low priority (15-23)
+  }
+
+  getPriorityColor(totalScore) {
+    const level = this.getPriorityLevel(totalScore);
+    switch (level) {
+      case 'high': return '#dc3545';
+      case 'medium': return '#ffc107';
+      case 'low': return '#17a2b8';
+      default: return '#6c757d';
+    }
+  }
+
+  getPriorityText(value) {
+    switch (parseInt(value)) {
+      case 1: return 'LOW';
+      case 2: return 'MEDIUM';
+      case 3: return 'HIGH';
+      default: return 'LOW';
+    }
+  }
+
   renderTasks() {
     const taskList = document.getElementById('task-list');
     const emptyState = document.getElementById('empty-state');
@@ -140,8 +201,9 @@ class TaskManager {
     if (!taskList) return;
 
     const filteredTasks = this.getFilteredTasks();
+    const sortedTasks = this.sortTasksByPriority(filteredTasks);
     
-    if (filteredTasks.length === 0) {
+    if (sortedTasks.length === 0) {
       taskList.innerHTML = '';
       if (emptyState) emptyState.style.display = 'block';
       return;
@@ -149,18 +211,33 @@ class TaskManager {
 
     if (emptyState) emptyState.style.display = 'none';
 
-    taskList.innerHTML = filteredTasks.map(task => this.createTaskHTML(task)).join('');
+    taskList.innerHTML = sortedTasks.map(task => this.createTaskHTML(task)).join('');
     
     // Add event listeners to new task elements
     this.attachTaskEventListeners();
   }
 
   createTaskHTML(task) {
+    const priority = task.priority || { totalScore: 15, importance: 1, urgency: 1, easiness: 1, interest: 1, dependency: 1 };
+    
     return `
       <div class="task-item ${task.completed ? 'completed' : ''}" data-task-id="${task.id}">
         <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-task-id="${task.id}"></div>
         <div class="task-content">
           <p class="task-text">${this.escapeHtml(task.text)}</p>
+          <div class="task-priority" style="color: ${this.getPriorityColor(priority.totalScore)};">
+            <span class="priority-badge priority-${this.getPriorityLevel(priority.totalScore)}">
+              ${this.getPriorityLevel(priority.totalScore).toUpperCase()}
+            </span>
+            <span>Score: ${priority.totalScore}/45</span>
+            <span style="font-size: 0.7rem; margin-left: 8px;">
+              I:${this.getPriorityText(priority.importance)} 
+              U:${this.getPriorityText(priority.urgency)} 
+              E:${this.getPriorityText(priority.easiness)} 
+              In:${this.getPriorityText(priority.interest)} 
+              D:${this.getPriorityText(priority.dependency)}
+            </span>
+          </div>
         </div>
         <div class="task-actions">
           <button class="task-btn edit-btn" data-task-id="${task.id}">Edit</button>

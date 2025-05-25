@@ -68,6 +68,57 @@
                             <input type="text" id="task-input" placeholder="What needs to be done?" class="task-input">
                             <button id="add-task-btn" class="add-task-btn">Add Task</button>
                         </div>
+                        
+                        <div class="priority-controls">
+                            <h4 class="priority-title">Set Task Priority</h4>
+                            <div class="priority-sliders">
+                                <div class="slider-group">
+                                    <label for="importance-slider">Importance</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="importance-slider" class="priority-slider" min="1" max="3" value="1">
+                                        <span class="slider-value" id="importance-value">LOW</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <label for="urgency-slider">Urgency</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="urgency-slider" class="priority-slider" min="1" max="3" value="1">
+                                        <span class="slider-value" id="urgency-value">LOW</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <label for="easiness-slider">Easiness</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="easiness-slider" class="priority-slider" min="1" max="3" value="1">
+                                        <span class="slider-value" id="easiness-value">LOW</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <label for="interest-slider">Interest</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="interest-slider" class="priority-slider" min="1" max="3" value="1">
+                                        <span class="slider-value" id="interest-value">LOW</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <label for="dependency-slider">Dependency</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="dependency-slider" class="priority-slider" min="1" max="3" value="1">
+                                        <span class="slider-value" id="dependency-value">LOW</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="priority-score">
+                                <span class="score-label">Priority Score:</span>
+                                <span class="score-value" id="priority-score">15</span>
+                                <span class="score-max">/45</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="task-stats">
