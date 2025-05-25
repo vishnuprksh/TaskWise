@@ -7,6 +7,9 @@
     "start": "node server.js",
     "dev": "NODE_ENV=development node server.js",
     "prod": "NODE_ENV=production node server.js",
+    "build": "npm run build:clean && npm run build:copy",
+    "build:clean": "find public -maxdepth 1 -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' | grep -v public/js | xargs rm -f",
+    "build:copy": "cp index.html app.js styles.css sw.js manifest.json public/",
     "lint": "eslint src/",
     "test": "jest"
   },

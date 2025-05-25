@@ -7,13 +7,19 @@ class Config {
 
   async load() {
     try {
-      const response = await fetch('/api/config');
-      this.config = await response.json();
+      // For Firebase hosting, we can't use /api/config since there's no backend
+      // Use fallback configuration directly
+      this.config = {
+        googleClientId: '658595013531-o5h6hofpdhj08pspidrqrqsdb2n5s64n.apps.googleusercontent.com',
+        appName: 'TaskWise',
+        appVersion: '1.0.0'
+      };
       this.loaded = true;
+      console.log('Configuration loaded for Firebase hosting environment');
       return this.config;
     } catch (error) {
       console.error('Failed to load configuration:', error);
-      // Fallback configuration
+      // Same fallback configuration
       this.config = {
         googleClientId: '658595013531-o5h6hofpdhj08pspidrqrqsdb2n5s64n.apps.googleusercontent.com',
         appName: 'TaskWise',

@@ -1,3 +1,14 @@
+// Make handleCredentialResponse globally available IMMEDIATELY
+// This must be available before Google scripts load
+window.handleCredentialResponse = function(response) {
+  console.log('Global callback received credential response');
+  if (window.AuthManager) {
+    window.AuthManager.handleCredentialResponse(response);
+  } else {
+    console.error('AuthManager not yet available');
+  }
+};
+
 // Authentication module for Google Sign-In
 class AuthManager {
   constructor() {
@@ -10,12 +21,26 @@ class AuthManager {
       console.log('Initializing Google Sign-In from origin:', window.location.origin);
       console.log('Client ID being used:', clientId);
 
+      // Use both programmatic and HTML callback methods
       google.accounts.id.initialize({
         client_id: clientId,
-        callback: this.handleCredentialResponse.bind(this),
+        callback: window.handleCredentialResponse, // Use global function
         ux_mode: "popup",
         auto_select: false
       });
+
+      // Also render the button programmatically to ensure it works
+      google.accounts.id.renderButton(
+        document.querySelector('.g_id_signin'),
+        { 
+          type: "standard",
+          size: "large", 
+          theme: "outline", 
+          text: "sign_in_with",
+          shape: "rectangular",
+          logo_alignment: "left"
+        }
+      );
 
       this.isInitialized = true;
       console.log('Google Sign-In initialized successfully from origin:', window.location.origin);
