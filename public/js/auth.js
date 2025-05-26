@@ -138,6 +138,7 @@ class AuthManager {
       window.UI.showHomePage(userInfo);
     } catch (error) {
       console.error('Error handling credential response:', error);
+      window.UI.hideLoadingScreen();
       window.UI.showError('Login failed. Please try again.');
     }
   }

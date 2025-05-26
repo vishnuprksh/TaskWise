@@ -6,14 +6,14 @@ class TaskWiseApp {
 
   async init() {
     try {
+      // Show loading screen immediately
+      window.UI.showLoadingScreen();
+
       // Log origin information for debugging
       window.UI.logOriginInfo();
 
       // Initialize Firebase first
       await this.initializeFirebase();
-
-      // Initialize UI manager
-      window.UI.init();
 
       // Load configuration from server
       await window.Config.load();
@@ -31,6 +31,7 @@ class TaskWiseApp {
       console.log('TaskWise app initialized successfully');
     } catch (error) {
       console.error('Failed to initialize TaskWise app:', error);
+      window.UI.hideLoadingScreen();
       window.UI.showError('Application failed to initialize. Please refresh the page.');
     }
   }
@@ -105,6 +106,10 @@ class TaskWiseApp {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize UI first to show loading screen
+  window.UI.init();
+  window.UI.showLoadingScreen();
+  
   const app = new TaskWiseApp();
   app.init();
 });
@@ -113,6 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('load', () => {
   // Check if app is already initialized
   if (!window.taskWiseApp?.initialized) {
+    // Initialize UI first to show loading screen
+    window.UI.init();
+    window.UI.showLoadingScreen();
+    
     const app = new TaskWiseApp();
     app.init();
     window.taskWiseApp = app;

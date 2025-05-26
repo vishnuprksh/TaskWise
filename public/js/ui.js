@@ -6,6 +6,7 @@ class UIManager {
 
   init() {
     this.elements = {
+      loadingSection: document.getElementById('loading-section'),
       loginSection: document.getElementById('login-section'),
       homeSection: document.getElementById('home-section'),
       userName: document.getElementById('user-name'),
@@ -60,12 +61,24 @@ class UIManager {
     }
   }
 
+  showLoadingScreen() {
+    this.elements.loadingSection?.classList.remove('hidden');
+    this.elements.loginSection?.classList.add('hidden');
+    this.elements.homeSection?.classList.add('hidden');
+  }
+
+  hideLoadingScreen() {
+    this.elements.loadingSection?.classList.add('hidden');
+  }
+
   showLoginPage() {
+    this.hideLoadingScreen();
     this.elements.loginSection?.classList.remove('hidden');
     this.elements.homeSection?.classList.add('hidden');
   }
 
   showHomePage(userInfo) {
+    this.hideLoadingScreen();
     this.elements.loginSection?.classList.add('hidden');
     this.elements.homeSection?.classList.remove('hidden');
     
