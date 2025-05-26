@@ -5,10 +5,21 @@ class FirebaseManager {
     this.auth = null;
     this.db = null;
     this.initialized = false;
+    this.persistenceEnabled = false;
   }
 
-  init() {
+  async init() {
+    if (this.initialized) {
+      console.log('Firebase already initialized');
+      return;
+    }
+
     try {
+      // Check if Firebase SDK is loaded
+      if (typeof firebase === 'undefined') {
+        throw new Error('Firebase SDK not loaded');
+      }
+
       // Firebase configuration - UPDATED with correct values
       const firebaseConfig = {
         apiKey: "AIzaSyDX8JT5v5_Q2qQ4fQbZpZvQzY8h1xJlMkU",
@@ -20,19 +31,32 @@ class FirebaseManager {
       };
 
       // Initialize Firebase
-      this.app = firebase.initializeApp(firebaseConfig);
+      // Check if Firebase app already exists to prevent re-initialization
+      if (firebase.apps.length === 0) {
+        this.app = firebase.initializeApp(firebaseConfig);
+      } else {
+        this.app = firebase.app(); // Use existing app
+      }
       this.auth = firebase.auth();
       this.db = firebase.firestore();
 
-      // Enable offline persistence for better reliability
-      this.db.enablePersistence({ synchronizeTabs: true })
-        .catch((err) => {
-          if (err.code == 'failed-precondition') {
+      // Enable offline persistence IMMEDIATELY after creating Firestore instance
+      // and BEFORE any other Firestore operations
+      if (!this.persistenceEnabled) {
+        try {
+          await this.db.enablePersistence({ synchronizeTabs: true });
+          this.persistenceEnabled = true;
+          console.log('Firestore persistence enabled successfully');
+        } catch (err) {
+          if (err.code === 'failed-precondition') {
             console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-          } else if (err.code == 'unimplemented') {
+          } else if (err.code === 'unimplemented') {
             console.warn('The current browser does not support persistence.');
+          } else {
+            console.warn('Failed to enable persistence:', err);
           }
-        });
+        }
+      }
 
       this.initialized = true;
       console.log('Firebase initialized successfully');

@@ -37,7 +37,7 @@ class TaskWiseApp {
 
   async initializeFirebase() {
     try {
-      window.FirebaseManager.init();
+      await window.FirebaseManager.init();
       console.log('Firebase initialized successfully');
       
       // Test Firestore connection

@@ -15,7 +15,11 @@ class UIManager {
       addTaskBtn: document.getElementById('add-task-btn'),
       taskList: document.getElementById('task-list'),
       emptyState: document.getElementById('empty-state'),
-      filterBtns: document.querySelectorAll('.filter-btn')
+      filterBtns: document.querySelectorAll('.filter-btn'),
+      // Task stats elements
+      totalTasksElement: document.getElementById('total-tasks'),
+      completedTasksElement: document.getElementById('completed-tasks'),
+      pendingTasksElement: document.getElementById('pending-tasks')
     };
 
     this.setupEventListeners();
@@ -116,6 +120,18 @@ class UIManager {
     console.log('Current href:', window.location.href);
     console.log('User agent:', navigator.userAgent);
     console.log('========================');
+  }
+
+  updateTaskStats(total, completed, pending) {
+    if (this.elements.totalTasksElement) {
+      this.elements.totalTasksElement.textContent = total;
+    }
+    if (this.elements.completedTasksElement) {
+      this.elements.completedTasksElement.textContent = completed;
+    }
+    if (this.elements.pendingTasksElement) {
+      this.elements.pendingTasksElement.textContent = pending;
+    }
   }
 }
 
