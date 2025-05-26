@@ -1,3 +1,26 @@
+:root {
+    /* Dark Theme Colors */
+    --bg-gradient-start: #1a1a2e;
+    --bg-gradient-end: #16213e;
+    --card-bg: #2d3748;
+    --card-bg-secondary: #4a5568;
+    --text-primary: #e2e8f0;
+    --text-secondary: #a0aec0;
+    --text-muted: #718096;
+    --border-color: #4a5568;
+    --border-light: #2d3748;
+    --accent-primary: #4299e1;
+    --accent-hover: #3182ce;
+    --success: #48bb78;
+    --warning: #ed8936;
+    --danger: #f56565;
+    --header-bg: #1a202c;
+    --input-bg: #2d3748;
+    --button-secondary: #4a5568;
+    --button-secondary-hover: #2d3748;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,9 +29,9 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     min-height: 100vh;
-    color: #333;
+    color: var(--text-primary);
     margin: 0;
     padding: 20px 0;
 }
@@ -47,10 +70,10 @@ header h1 {
 
 /* Loading Screen Styles */
 .loading-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 40px 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 30px var(--shadow);
     text-align: center;
     min-height: 200px;
     display: flex;
@@ -66,8 +89,8 @@ header h1 {
 .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #4285f4;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--accent-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -78,30 +101,30 @@ header h1 {
 }
 
 .loading-card h2 {
-    color: #4285f4;
+    color: var(--accent-primary);
     margin-bottom: 10px;
     font-weight: 600;
 }
 
 .loading-card p {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
 .login-card, .welcome-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 40px 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 30px var(--shadow);
     text-align: center;
 }
 
 /* Task Manager Styles */
 .task-manager {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 30px var(--shadow);
     max-width: 100%;
 }
 
@@ -111,9 +134,12 @@ header h1 {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eee;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
     min-height: 60px;
+    background: var(--header-bg);
+    border-radius: 8px;
+    margin: -20px -20px 15px -20px;
 }
 
 .app-branding {
@@ -124,14 +150,14 @@ header h1 {
 .app-branding h1 {
     margin: 0;
     font-size: 1.8rem;
-    color: #4285f4;
+    color: var(--accent-primary);
     font-weight: 600;
     line-height: 1.2;
 }
 
 .app-branding .tagline {
     margin: 2px 0 0 0;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     font-style: italic;
     line-height: 1.2;
@@ -148,14 +174,14 @@ header h1 {
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    border: 2px solid #4285f4;
+    border: 2px solid var(--accent-primary);
     object-fit: cover;
 }
 
 .sign-out-btn {
-    background: #f8f9fa;
-    color: #495057;
-    border: 1px solid #dee2e6;
+    background: var(--button-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -164,8 +190,8 @@ header h1 {
 }
 
 .sign-out-btn:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background: var(--button-secondary-hover);
+    border-color: var(--border-light);
 }
 
 /* Remove old user-header styles since we're using app-header now */
@@ -185,19 +211,36 @@ header h1 {
 .task-input {
     flex: 1;
     padding: 15px;
-    border: 2px solid #e1e5e9;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     font-size: 1rem;
     outline: none;
     transition: border-color 0.3s ease;
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.task-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.task-input::-webkit-input-placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.task-input::-moz-placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
 }
 
 .task-input:focus {
-    border-color: #4285f4;
+    border-color: var(--accent-primary);
 }
 
 .add-task-btn {
-    background: #4285f4;
+    background: var(--accent-primary);
     color: white;
     border: none;
     padding: 15px 25px;
@@ -209,13 +252,13 @@ header h1 {
 }
 
 .add-task-btn:hover {
-    background: #3367d6;
+    background: var(--accent-hover);
 }
 
 .task-stats {
     display: flex;
     justify-content: space-around;
-    background: #f8f9fa;
+    background: var(--card-bg-secondary);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 20px;
@@ -229,12 +272,12 @@ header h1 {
     display: block;
     font-size: 2rem;
     font-weight: 600;
-    color: #4285f4;
+    color: var(--accent-primary);
 }
 
 .stat-label {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -247,23 +290,24 @@ header h1 {
 
 .filter-btn {
     padding: 10px 20px;
-    border: 2px solid #e1e5e9;
-    background: white;
+    border: 2px solid var(--border-color);
+    background: var(--card-bg);
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+    color: var(--text-primary);
 }
 
 .filter-btn.active {
-    background: #4285f4;
+    background: var(--accent-primary);
     color: white;
-    border-color: #4285f4;
+    border-color: var(--accent-primary);
 }
 
 .filter-btn:hover:not(.active) {
-    border-color: #4285f4;
-    color: #4285f4;
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
 }
 
 .task-list-container {
@@ -276,7 +320,7 @@ header h1 {
     align-items: center;
     gap: 15px;
     padding: 15px;
-    background: #f8f9fa;
+    background: var(--card-bg-secondary);
     border-radius: 8px;
     margin-bottom: 10px;
     transition: all 0.3s ease;
@@ -284,32 +328,32 @@ header h1 {
 }
 
 .task-item:hover {
-    background: #e9ecef;
+    background: var(--border-color);
 }
 
 .task-item.completed {
     opacity: 0.7;
-    border-left-color: #28a745;
+    border-left-color: var(--success);
 }
 
 .task-item.completed .task-text {
     text-decoration: line-through;
-    color: #6c757d;
+    color: var(--text-muted);
 }
 
 .task-checkbox {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 2px solid #dee2e6;
+    border: 2px solid var(--border-color);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
 }
 
 .task-checkbox.checked {
-    background: #28a745;
-    border-color: #28a745;
+    background: var(--success);
+    border-color: var(--success);
 }
 
 .task-checkbox.checked::after {
@@ -331,7 +375,7 @@ header h1 {
     margin: 0;
     font-size: 1.2rem;
     font-weight: 500;
-    color: #333;
+    color: var(--text-primary);
     line-height: 1.4;
 }
 
@@ -356,27 +400,27 @@ header h1 {
 }
 
 .edit-btn {
-    background: #ffc107;
-    color: #212529;
+    background: var(--warning);
+    color: white;
 }
 
 .edit-btn:hover {
-    background: #e0a800;
+    background: #d69e2e;
 }
 
 .delete-btn {
-    background: #dc3545;
+    background: var(--danger);
     color: white;
 }
 
 .delete-btn:hover {
-    background: #c82333;
+    background: #e53e3e;
 }
 
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #6c757d;
+    color: var(--text-muted);
 }
 
 .empty-icon {
@@ -387,7 +431,7 @@ header h1 {
 .empty-state h3 {
     margin: 0 0 10px 0;
     font-size: 1.5rem;
-    color: #495057;
+    color: var(--text-secondary);
 }
 
 .empty-state p {
@@ -397,17 +441,17 @@ header h1 {
 
 /* Priority Controls Styles */
 .priority-controls {
-    background: #f8f9fa;
+    background: var(--card-bg-secondary);
     border-radius: 8px;
     padding: 20px;
     margin-top: 20px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
 }
 
 .priority-title {
     margin: 0 0 15px 0;
     font-size: 1.1rem;
-    color: #495057;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
@@ -427,7 +471,7 @@ header h1 {
 .slider-group label {
     font-size: 0.9rem;
     font-weight: 500;
-    color: #495057;
+    color: var(--text-primary);
     text-transform: capitalize;
 }
 
@@ -440,7 +484,7 @@ header h1 {
 .priority-slider {
     flex: 1;
     height: 6px;
-    background: #dee2e6;
+    background: var(--border-color);
     border-radius: 3px;
     outline: none;
     appearance: none;
@@ -452,31 +496,31 @@ header h1 {
     appearance: none;
     width: 18px;
     height: 18px;
-    background: #4285f4;
+    background: var(--accent-primary);
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px var(--shadow);
 }
 
 .priority-slider::-webkit-slider-thumb:hover {
-    background: #3367d6;
+    background: var(--accent-hover);
     transform: scale(1.1);
 }
 
 .priority-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background: #4285f4;
+    background: var(--accent-primary);
     border-radius: 50%;
     cursor: pointer;
     border: none;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px var(--shadow);
 }
 
 .priority-slider::-moz-range-thumb:hover {
-    background: #3367d6;
+    background: var(--accent-hover);
     transform: scale(1.1);
 }
 
@@ -484,12 +528,12 @@ header h1 {
     min-width: 20px;
     text-align: center;
     font-weight: 600;
-    color: #4285f4;
+    color: var(--accent-primary);
     font-size: 0.9rem;
     padding: 2px 6px;
-    background: white;
+    background: var(--card-bg);
     border-radius: 4px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
 }
 
 .priority-score {
@@ -498,25 +542,25 @@ header h1 {
     justify-content: center;
     gap: 5px;
     padding: 15px;
-    background: white;
+    background: var(--card-bg);
     border-radius: 6px;
-    border: 2px solid #4285f4;
+    border: 2px solid var(--accent-primary);
     margin-top: 10px;
 }
 
 .score-label {
     font-weight: 500;
-    color: #495057;
+    color: var(--text-primary);
 }
 
 .score-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #4285f4;
+    color: var(--accent-primary);
 }
 
 .score-max {
-    color: #6c757d;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
@@ -526,7 +570,7 @@ header h1 {
     align-items: center;
     gap: 5px;
     font-size: 0.8rem;
-    color: #6c757d;
+    color: var(--text-muted);
 }
 
 .priority-badge {
@@ -538,31 +582,48 @@ header h1 {
 }
 
 .priority-high {
-    background: #fee;
-    color: #dc3545;
+    background: rgba(245, 101, 101, 0.2);
+    color: var(--danger);
 }
 
 .priority-medium {
-    background: #fff3cd;
-    color: #856404;
+    background: rgba(237, 137, 54, 0.2);
+    color: var(--warning);
 }
 
 .priority-low {
-    background: #d1ecf1;
-    color: #0c5460;
+    background: rgba(72, 187, 120, 0.2);
+    color: var(--success);
 }
 
 @media (max-width: 480px) {
     body {
-        padding: 5px 5px;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
     }
     
     .container {
-        padding: 2px;
+        padding: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
     }
     
     .task-manager {
-        padding: 20px;
+        padding: 15px;
+        border-radius: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        box-shadow: none;
+        min-height: 100vh;
+    }
+    
+    .task-list-container {
+        flex: 1;
+        min-height: auto;
     }
     
     .app-header {
@@ -571,6 +632,11 @@ header h1 {
         justify-content: space-between;
         align-items: center;
         gap: 10px;
+        margin: -15px -15px 15px -15px;
+        padding: 15px;
+        background: var(--header-bg);
+        border-radius: 0;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .app-branding h1 {
@@ -672,4 +738,73 @@ header h1 {
     header h1 {
         font-size: 2rem;
     }
+    
+    /* Ensure loading and login screens also work well on mobile */
+    .loading-card, .login-card {
+        border-radius: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: none;
+        background: var(--card-bg);
+    }
+}
+
+/* Additional dark theme form styling */
+.task-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.task-input::-webkit-input-placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.task-input::-moz-placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* Dark theme login/welcome card text styling */
+.login-card h2, .welcome-card h2 {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+}
+
+.login-card p, .welcome-card p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+/* Ensure scrollbar styling matches dark theme */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--card-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Dark theme focus styles */
+*:focus {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.task-input:focus,
+.priority-slider:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3);
 }
