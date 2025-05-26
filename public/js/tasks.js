@@ -319,6 +319,16 @@ class TaskManager {
     this.createTaskModal(task);
   }
 
+  confirmDeleteTask(taskId) {
+    const task = this.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const confirmed = confirm(`Are you sure you want to delete the task "${task.text}"?`);
+    if (confirmed) {
+      this.deleteTask(taskId);
+    }
+  }
+
   createTaskModal(task = null) {
     const isEditing = task !== null;
     const priority = task?.priority || { importance: 1, urgency: 1, easiness: 1, interest: 1, dependency: 1, totalScore: 15 };
