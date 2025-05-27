@@ -750,6 +750,25 @@ header h1 {
         box-shadow: none;
         background: var(--card-bg);
     }
+    
+    /* Responsive modal button adjustments */
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-btn-save,
+    .modal-btn-cancel {
+        width: 100%;
+        min-width: auto;
+        padding: 14px 20px;
+        font-size: 1rem;
+    }
+    
+    .modal-buttons {
+        margin-top: 20px;
+        padding-top: 15px;
+    }
 }
 
 /* Additional dark theme form styling */
@@ -990,8 +1009,64 @@ header h1 {
     transform: none !important;
 }
 
+/* Modal buttons container */
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Save button styling */
+.modal-btn-save {
+    background: linear-gradient(135deg, #4285f4, #3367d6);
+    color: white;
+    font-weight: 600;
+    padding: 12px 24px;
+    min-width: 120px;
+    box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+}
+
+.modal-btn-save:hover {
+    background: linear-gradient(135deg, #3367d6, #2851a3);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+    transform: translateY(-2px);
+}
+
+.modal-btn-save:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(66, 133, 244, 0.3);
+}
+
+/* Cancel button styling */
+.modal-btn-cancel {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #495057;
+    font-weight: 500;
+    padding: 12px 20px;
+    min-width: 100px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modal-btn-cancel:hover {
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+    color: #343a40;
+    border-color: #adb5bd;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.modal-btn-cancel:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .modal-btn-save:disabled {
     background: #6c757d;
+    box-shadow: none;
 }
 
 .modal-btn-save:disabled:hover {
