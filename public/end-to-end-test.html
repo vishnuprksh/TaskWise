@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>End-to-End Modal Test - TaskWise</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>End-to-End Modal Test</h1>
+        <p>This page tests the complete modal functionality with proper initialization</p>
+        
+        <div class="test-section">
+            <h3>Initialization Status</h3>
+            <div id="init-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Manual Tests</h3>
+            <button class="test-button" onclick="testModal()">Test Add Task Modal</button>
+            <button class="test-button" onclick="testEditModal()">Test Edit Task Modal</button>
+            <button class="test-button" onclick="testAddTaskButton()">Test Real Add Task Button</button>
+            <button class="test-button" onclick="clearLogs()">Clear Logs</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Mock Add Task Button (for testing)</h3>
+            <button id="add-task-btn" class="add-task-btn">
+                <span style="margin-right: 8px;">➕</span>
+                Add New Task
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Console Logs</h3>
+            <div id="console-logs" class="log-output"></div>
+        </div>
+    </div>
+
+    <!-- Load all dependencies -->
+    <script>
+        // Mock Firebase for testing
+        window.firebase = {
+            firestore: {
+                FieldValue: {
+                    serverTimestamp: () => new Date()
+                }
+            }
+        };
+        
+        // Mock FirebaseManager
+        window.FirebaseManager = {
+            isInitialized: () => true,
+            getFirestore: () => ({
+                collection: (path) => ({
+                    doc: (id) => ({
+                        collection: (subPath) => ({
+                            add: async (data) => {
+                                console.log('Mock: Adding document', data);
+                                return { id: 'mock_' + Date.now() };
+                            }
+                        }),
+                        update: async (data) => {
+                            console.log('Mock: Updating document', data);
+                        }
+                    })
+                })
+            })
+        };
+        
+        // Mock UI
+        window.UI = {
+            showError: (msg) => {
+                console.error('UI Error:', msg);
+                showStatus(msg, 'error');
+            },
+            updateTaskStats: (total, completed, pending) => {
+                console.log('UI: Stats updated', { total, completed, pending });
+            }
+        };
+        
+        // Console capture
+        const consoleDiv = document.getElementById('console-logs');
+        let logCount = 0;
+        
+        function logToConsole(type, ...args) {
+            logCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const message = `[${timestamp}] ${type.toUpperCase()}: ${args.join(' ')}\n`;
+            consoleDiv.textContent += message;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            
+            // Limit log size
+            if (logCount > 100) {
+                const lines = consoleDiv.textContent.split('\n');
+                consoleDiv.textContent = lines.slice(-80).join('\n');
+                logCount = 80;
+            }
+        }
+        
+        // Override console methods
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn
+        };
+        
+        console.log = function(...args) {
+            originalConsole.log.apply(console, args);
+            logToConsole('log', ...args);
+        };
+        
+        console.error = function(...args) {
+            originalConsole.error.apply(console, args);
+            logToConsole('error', ...args);
+        };
+        
+        console.warn = function(...args) {
+            originalConsole.warn.apply(console, args);
+            logToConsole('warn', ...args);
+        };
+        
+        // Status display
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('init-status');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            statusDiv.appendChild(div);
+        }
+        
+        // Test functions
+        function testModal() {
+            console.log('=== TESTING ADD TASK MODAL ===');
+            try {
+                if (window.TaskManager && window.TaskManager.showAddTaskModal) {
+                    window.TaskManager.showAddTaskModal();
+                    showStatus('✅ Modal opened successfully', 'success');
+                } else {
+                    showStatus('❌ TaskManager or showAddTaskModal not available', 'error');
+                }
+            } catch (error) {
+                console.error('Error opening modal:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function testEditModal() {
+            console.log('=== TESTING EDIT TASK MODAL ===');
+            try {
+                const mockTask = {
+                    id: 'test_task_123',
+                    text: 'Test task for editing',
+                    priority: {
+                        importance: 2,
+                        urgency: 1,
+                        easiness: 3,
+                        interest: 2,
+                        dependency: 1,
+                        totalScore: 25
+                    }
+                };
+                
+                if (window.TaskManager && window.TaskManager.createTaskModal) {
+                    window.TaskManager.createTaskModal(mockTask);
+                    showStatus('✅ Edit modal opened successfully', 'success');
+                } else {
+                    showStatus('❌ TaskManager or createTaskModal not available', 'error');
+                }
+            } catch (error) {
+                console.error('Error opening edit modal:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function testAddTaskButton() {
+            console.log('=== TESTING ADD TASK BUTTON CLICK ===');
+            const button = document.getElementById('add-task-btn');
+            if (button) {
+                button.click();
+                showStatus('✅ Add task button clicked', 'success');
+            } else {
+                showStatus('❌ Add task button not found', 'error');
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('console-logs').textContent = '';
+            logCount = 0;
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page initializing...');
+            showStatus('Page loaded, initializing components...', 'info');
+        });
+    </script>
+    
+    <!-- Load TaskManager -->
+    <script src="js/tasks.js"></script>
+    
+    <script>
+        // Setup after TaskManager loads
+        setTimeout(() => {
+            console.log('Setting up TaskManager for testing...');
+            
+            if (window.TaskManager) {
+                // Set mock user ID
+                window.TaskManager.userId = 'test_user_123';
+                console.log('TaskManager user ID set to:', window.TaskManager.userId);
+                
+                // Check available methods
+                const methods = [
+                    'showAddTaskModal', 
+                    'createTaskModal', 
+                    'setupTaskModalListeners',
+                    'saveNewTask', 
+                    'saveEditedTask', 
+                    'closeTaskModal'
+                ];
+                
+                methods.forEach(method => {
+                    const exists = typeof window.TaskManager[method] === 'function';
+                    console.log(`Method ${method}:`, exists ? '✅ Available' : '❌ Missing');
+                    showStatus(`${method}: ${exists ? 'Available' : 'Missing'}`, exists ? 'success' : 'error');
+                });
+                
+                // Setup UI event listener for the mock button
+                if (window.UI && window.UI.init) {
+                    try {
+                        window.UI.init();
+                        console.log('UI initialized');
+                    } catch (error) {
+                        console.error('UI init error:', error);
+                    }
+                }
+                
+                // Manual button setup
+                const addButton = document.getElementById('add-task-btn');
+                if (addButton) {
+                    addButton.addEventListener('click', () => {
+                        console.log('Add task button clicked - calling showAddTaskModal');
+                        if (window.TaskManager && window.TaskManager.showAddTaskModal) {
+                            window.TaskManager.showAddTaskModal();
+                        } else {
+                            console.error('TaskManager or showAddTaskModal not available');
+                        }
+                    });
+                    console.log('Event listener added to add task button');
+                }
+                
+                showStatus('✅ TaskManager initialized successfully', 'success');
+            } else {
+                showStatus('❌ TaskManager not loaded', 'error');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

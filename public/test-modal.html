@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #3367d6;
+        }
+        .log-output {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>TaskWise Modal Test</h1>
+        <p>Testing the task modal functionality independently.</p>
+        
+        <button id="test-modal" class="test-button">Test Modal</button>
+        <button id="clear-logs" class="test-button">Clear Logs</button>
+        
+        <div id="log-output" class="log-output"></div>
+    </div>
+
+    <!-- Mock Firebase -->
+    <script>
+        window.firebase = {
+            firestore: {
+                FieldValue: {
+                    serverTimestamp: () => new Date()
+                }
+            }
+        };
+        
+        window.FirebaseManager = {
+            isInitialized: () => true,
+            getFirestore: () => ({
+                collection: () => ({
+                    doc: () => ({
+                        collection: () => ({
+                            add: async (data) => {
+                                console.log('Mock: Adding task', data);
+                                return { id: 'mock_id_' + Date.now() };
+                            }
+                        })
+                    })
+                })
+            })
+        };
+        
+        window.UI = {
+            showError: (msg) => logMessage('ERROR: ' + msg)
+        };
+    </script>
+    
+    <!-- Console capture -->
+    <script>
+        function logMessage(message) {
+            const logOutput = document.getElementById('log-output');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.innerHTML += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logMessage(args.join(' '));
+        };
+        
+        const originalError = console.error;
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logMessage('ERROR: ' + args.join(' '));
+        };
+    </script>
+
+    <!-- Load TaskManager -->
+    <script src="js/tasks.js"></script>
+
+    <script>
+        // Initialize TaskManager for testing
+        window.TaskManager = new TaskManager();
+        window.TaskManager.userId = 'test_user_123';
+        
+        logMessage('TaskManager initialized for testing');
+        
+        // Test modal functionality
+        document.getElementById('test-modal').addEventListener('click', () => {
+            logMessage('Testing modal...');
+            try {
+                if (window.TaskManager.showAddTaskModal) {
+                    window.TaskManager.showAddTaskModal();
+                    logMessage('Modal should be visible now');
+                } else {
+                    logMessage('ERROR: showAddTaskModal method not found');
+                }
+            } catch (error) {
+                logMessage('ERROR: ' + error.message);
+                console.error(error);
+            }
+        });
+        
+        document.getElementById('clear-logs').addEventListener('click', () => {
+            document.getElementById('log-output').innerHTML = '';
+        });
+        
+        logMessage('Test page ready');
+    </script>
+</body>
+</html>

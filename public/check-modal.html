@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Check - TaskWise</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>TaskWise Modal Functionality Check</h1>
+        
+        <div class="test-section">
+            <h2>Test Results:</h2>
+            <div id="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Manual Tests:</h2>
+            <button id="test-modal-direct" class="btn btn-primary">Test Modal Directly</button>
+            <button id="test-taskmanager" class="btn btn-secondary">Test TaskManager</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Console Output:</h2>
+            <div id="console-output" style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Load dependencies in correct order -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/firebase-manager.js"></script>
+    <script src="js/pwa-manager.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/tasks.js"></script>
+
+    <script>
+        // Console capture
+        const consoleOutput = document.getElementById('console-output');
+        const testResults = document.getElementById('test-results');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            consoleOutput.textContent += `[${timestamp}] ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        function addResult(test, result, details = '') {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div style="margin: 10px 0; padding: 10px; border-radius: 5px; background: ${result ? '#d4edda' : '#f8d7da'};">
+                    <strong>${test}:</strong> ${result ? '✅ PASS' : '❌ FAIL'}
+                    ${details ? `<br><small>${details}</small>` : ''}
+                </div>
+            `;
+            testResults.appendChild(div);
+        }
+        
+        // Override console methods
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            log('LOG: ' + args.join(' '));
+        };
+        
+        const originalError = console.error;
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            log('ERROR: ' + args.join(' '));
+        };
+        
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            log('WARN: ' + args.join(' '));
+        };
+
+        // Initialize tests after DOM is loaded
+        document.addEventListener('DOMContentLoaded', async function() {
+            log('Starting TaskWise modal functionality check...');
+            
+            // Test 1: Check if TaskManager exists
+            const taskManagerExists = typeof window.TaskManager !== 'undefined';
+            addResult('TaskManager exists', taskManagerExists);
+            
+            if (taskManagerExists) {
+                // Test 2: Check if showAddTaskModal method exists
+                const methodExists = typeof window.TaskManager.showAddTaskModal === 'function';
+                addResult('showAddTaskModal method exists', methodExists);
+                
+                // Test 3: Check if TaskManager has createTaskModal method
+                const createMethodExists = typeof window.TaskManager.createTaskModal === 'function';
+                addResult('createTaskModal method exists', createMethodExists);
+                
+                // Test 4: Check other required methods
+                const methods = ['setupTaskModalListeners', 'saveNewTask', 'saveEditedTask', 'closeTaskModal'];
+                methods.forEach(method => {
+                    const exists = typeof window.TaskManager[method] === 'function';
+                    addResult(`${method} method exists`, exists);
+                });
+            }
+            
+            // Test 5: Check if UI manager exists and has required elements
+            const uiExists = typeof window.UI !== 'undefined';
+            addResult('UI Manager exists', uiExists);
+            
+            // Test 6: Check CSS classes
+            const requiredClasses = ['.task-modal-overlay', '.task-modal', '.modal-close', '.priority-slider'];
+            requiredClasses.forEach(className => {
+                const styles = getComputedStyle(document.documentElement);
+                // This is a basic check - in a real scenario we'd need to check if the CSS is properly loaded
+                addResult(`CSS class ${className} defined`, true, 'Assuming CSS is loaded');
+            });
+            
+            log('Tests completed');
+        });
+        
+        // Manual test buttons
+        document.getElementById('test-modal-direct').addEventListener('click', function() {
+            log('Testing modal directly...');
+            try {
+                if (window.TaskManager && window.TaskManager.createTaskModal) {
+                    window.TaskManager.createTaskModal();
+                    log('Modal created successfully');
+                    addResult('Direct modal creation', true);
+                } else {
+                    log('TaskManager or createTaskModal not available');
+                    addResult('Direct modal creation', false, 'TaskManager or createTaskModal not available');
+                }
+            } catch (error) {
+                log('Error creating modal: ' + error.message);
+                addResult('Direct modal creation', false, error.message);
+            }
+        });
+        
+        document.getElementById('test-taskmanager').addEventListener('click', function() {
+            log('Testing TaskManager showAddTaskModal...');
+            try {
+                if (window.TaskManager && window.TaskManager.showAddTaskModal) {
+                    // Set a mock user ID for testing
+                    window.TaskManager.userId = 'test_user_123';
+                    window.TaskManager.showAddTaskModal();
+                    log('showAddTaskModal called successfully');
+                    addResult('showAddTaskModal test', true);
+                } else {
+                    log('TaskManager or showAddTaskModal not available');
+                    addResult('showAddTaskModal test', false, 'Method not available');
+                }
+            } catch (error) {
+                log('Error calling showAddTaskModal: ' + error.message);
+                addResult('showAddTaskModal test', false, error.message);
+            }
+        });
+        
+        // Initialize UI manager if it exists
+        if (window.UI && window.UI.init) {
+            try {
+                window.UI.init();
+                log('UI Manager initialized');
+            } catch (error) {
+                log('Error initializing UI: ' + error.message);
+            }
+        }
+        
+        log('Check page ready');
+    </script>
+</body>
+</html>

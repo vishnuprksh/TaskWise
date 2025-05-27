@@ -35,9 +35,17 @@ class UIManager {
 
     // Add task button event listener
     if (this.elements.addTaskBtn) {
+      console.log('UI: Setting up add task button event listener');
       this.elements.addTaskBtn.addEventListener('click', () => {
-        window.TaskManager.showAddTaskModal();
+        console.log('UI: Add task button clicked');
+        if (window.TaskManager && window.TaskManager.showAddTaskModal) {
+          window.TaskManager.showAddTaskModal();
+        } else {
+          console.error('UI: TaskManager or showAddTaskModal not available');
+        }
       });
+    } else {
+      console.warn('UI: Add task button not found');
     }
 
     // Filter button event listeners

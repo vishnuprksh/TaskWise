@@ -309,6 +309,7 @@ class TaskManager {
   }
 
   showAddTaskModal() {
+    console.log('TaskManager: showAddTaskModal called');
     this.createTaskModal(null);
   }
 
@@ -330,111 +331,92 @@ class TaskManager {
   }
 
   createTaskModal(task = null) {
+    console.log('TaskManager: createTaskModal called', { task });
+    
+    // Remove any existing modals first
+    const existingModal = document.querySelector('.task-modal-overlay');
+    if (existingModal) {
+      console.log('TaskManager: Removing existing modal');
+      existingModal.remove();
+    }
+
     const isEditing = task !== null;
     const priority = task?.priority || { importance: 1, urgency: 1, easiness: 1, interest: 1, dependency: 1, totalScore: 15 };
 
     // Create modal overlay
     const modalOverlay = document.createElement('div');
     modalOverlay.className = 'task-modal-overlay';
-    modalOverlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    `;
 
     // Create modal content
     const modal = document.createElement('div');
     modal.className = 'task-modal';
-    modal.style.cssText = `
-      background: white;
-      border-radius: 12px;
-      padding: 30px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    `;
 
     modal.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; color: #333;">
-        ${isEditing ? 'Edit Task' : 'Add New Task'}
-      </h3>
+      <button type="button" class="modal-close" aria-label="Close modal">&times;</button>
       
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Task Text:</label>
+      <h3>${isEditing ? 'Edit Task' : 'Add New Task'}</h3>
+      
+      <div class="form-group">
+        <label for="task-text">Task Text:</label>
         <input type="text" id="task-text" value="${isEditing ? this.escapeHtml(task.text) : ''}" 
-               placeholder="What needs to be done?"
-               style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; outline: none;">
+               placeholder="What needs to be done?" required>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <h4 style="margin: 0 0 15px 0; color: #495057;">Priority Settings</h4>
+      <div class="priority-settings">
+        <h4>Priority Settings</h4>
         
-        <div style="display: grid; gap: 15px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Importance</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="range" id="modal-importance" min="1" max="3" value="${priority.importance}" 
-                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
-              <span id="modal-importance-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.importance)}</span>
+        <div class="priority-grid">
+          <div class="priority-item">
+            <label for="modal-importance">Importance</label>
+            <div class="priority-slider-container">
+              <input type="range" id="modal-importance" class="priority-slider" min="1" max="3" value="${priority.importance}">
+              <span id="modal-importance-value" class="priority-value">${this.getPriorityText(priority.importance)}</span>
             </div>
           </div>
 
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Urgency</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="range" id="modal-urgency" min="1" max="3" value="${priority.urgency}" 
-                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
-              <span id="modal-urgency-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.urgency)}</span>
+          <div class="priority-item">
+            <label for="modal-urgency">Urgency</label>
+            <div class="priority-slider-container">
+              <input type="range" id="modal-urgency" class="priority-slider" min="1" max="3" value="${priority.urgency}">
+              <span id="modal-urgency-value" class="priority-value">${this.getPriorityText(priority.urgency)}</span>
             </div>
           </div>
 
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Easiness</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="range" id="modal-easiness" min="1" max="3" value="${priority.easiness}" 
-                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
-              <span id="modal-easiness-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.easiness)}</span>
+          <div class="priority-item">
+            <label for="modal-easiness">Easiness</label>
+            <div class="priority-slider-container">
+              <input type="range" id="modal-easiness" class="priority-slider" min="1" max="3" value="${priority.easiness}">
+              <span id="modal-easiness-value" class="priority-value">${this.getPriorityText(priority.easiness)}</span>
             </div>
           </div>
 
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Interest</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="range" id="modal-interest" min="1" max="3" value="${priority.interest}" 
-                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
-              <span id="modal-interest-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.interest)}</span>
+          <div class="priority-item">
+            <label for="modal-interest">Interest</label>
+            <div class="priority-slider-container">
+              <input type="range" id="modal-interest" class="priority-slider" min="1" max="3" value="${priority.interest}">
+              <span id="modal-interest-value" class="priority-value">${this.getPriorityText(priority.interest)}</span>
             </div>
           </div>
 
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Dependency</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="range" id="modal-dependency" min="1" max="3" value="${priority.dependency}" 
-                     style="flex: 1; height: 6px; background: #dee2e6; border-radius: 3px; outline: none; appearance: none; cursor: pointer;">
-              <span id="modal-dependency-value" style="min-width: 60px; text-align: center; font-weight: 600; color: #4285f4; padding: 2px 6px; background: #f8f9fa; border-radius: 4px;">${this.getPriorityText(priority.dependency)}</span>
+          <div class="priority-item">
+            <label for="modal-dependency">Dependency</label>
+            <div class="priority-slider-container">
+              <input type="range" id="modal-dependency" class="priority-slider" min="1" max="3" value="${priority.dependency}">
+              <span id="modal-dependency-value" class="priority-value">${this.getPriorityText(priority.dependency)}</span>
             </div>
           </div>
         </div>
 
-        <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
-          <span style="font-weight: 500; color: #495057;">Priority Score: </span>
-          <span id="modal-priority-score" style="font-size: 1.2rem; font-weight: 700; color: #4285f4;">${priority.totalScore}</span>
-          <span style="color: #6c757d;">/45</span>
+        <div class="priority-score-display">
+          <span class="priority-score-label">Priority Score:</span>
+          <span id="modal-priority-score" class="priority-score-value">${priority.totalScore}</span>
+          <span class="priority-score-max">/45</span>
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button id="modal-cancel-btn" style="padding: 10px 20px; border: 2px solid #6c757d; background: white; color: #6c757d; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Cancel</button>
-        <button id="modal-save-btn" style="padding: 10px 20px; border: none; background: #4285f4; color: white; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+      <div class="modal-buttons">
+        <button type="button" id="modal-cancel-btn" class="modal-btn modal-btn-cancel">Cancel</button>
+        <button type="button" id="modal-save-btn" class="modal-btn modal-btn-save">
           ${isEditing ? 'Save Changes' : 'Add Task'}
         </button>
       </div>
@@ -446,11 +428,16 @@ class TaskManager {
     // Setup event listeners
     this.setupTaskModalListeners(task, modalOverlay);
 
-    // Focus on text input
-    document.getElementById('task-text').focus();
-    if (isEditing) {
-      document.getElementById('task-text').select();
-    }
+    // Focus on text input with a small delay to ensure modal is rendered
+    setTimeout(() => {
+      const textInput = document.getElementById('task-text');
+      if (textInput) {
+        textInput.focus();
+        if (isEditing) {
+          textInput.select();
+        }
+      }
+    }, 100);
   }
 
   setupTaskModalListeners(task, modalOverlay) {
@@ -469,25 +456,44 @@ class TaskManager {
       const sliderElement = document.getElementById(slider);
       const valueElement = document.getElementById(value);
       
-      sliderElement.addEventListener('input', (e) => {
-        valueElement.textContent = this.getPriorityText(e.target.value);
-        this.updateModalPriorityScore();
-      });
-    });
-
-    // Save button
-    document.getElementById('modal-save-btn').addEventListener('click', () => {
-      if (isEditing) {
-        this.saveEditedTask(task.id, modalOverlay);
-      } else {
-        this.saveNewTask(modalOverlay);
+      if (sliderElement && valueElement) {
+        // Initialize the display
+        this.updatePriorityValueDisplay(sliderElement.value, valueElement);
+        
+        sliderElement.addEventListener('input', (e) => {
+          this.updatePriorityValueDisplay(e.target.value, valueElement);
+          this.updateModalPriorityScore();
+        });
       }
     });
 
+    // Save button
+    const saveBtn = document.getElementById('modal-save-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        if (isEditing) {
+          this.saveEditedTask(task.id, modalOverlay);
+        } else {
+          this.saveNewTask(modalOverlay);
+        }
+      });
+    }
+
     // Cancel button
-    document.getElementById('modal-cancel-btn').addEventListener('click', () => {
-      this.closeTaskModal(modalOverlay);
-    });
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.closeTaskModal(modalOverlay);
+      });
+    }
+
+    // Close button (X)
+    const closeBtn = modalOverlay.querySelector('.modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.closeTaskModal(modalOverlay);
+      });
+    }
 
     // Close on overlay click
     modalOverlay.addEventListener('click', (e) => {
@@ -506,23 +512,49 @@ class TaskManager {
     document.addEventListener('keydown', handleEscape);
 
     // Enter key to save
-    document.getElementById('task-text').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        if (isEditing) {
-          this.saveEditedTask(task.id, modalOverlay);
-        } else {
-          this.saveNewTask(modalOverlay);
+    const textInput = document.getElementById('task-text');
+    if (textInput) {
+      // Real-time validation
+      textInput.addEventListener('input', () => {
+        this.validateModalForm();
+      });
+      
+      textInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault(); // Prevent form submission
+          if (this.validateModalForm()) {
+            if (isEditing) {
+              this.saveEditedTask(task.id, modalOverlay);
+            } else {
+              this.saveNewTask(modalOverlay);
+            }
+          }
         }
-      }
-    });
+      });
+    }
+
+    // Store the escape handler on the modal for cleanup
+    modalOverlay._escapeHandler = handleEscape;
   }
 
   updateModalPriorityScore() {
-    const importance = parseInt(document.getElementById('modal-importance').value);
-    const urgency = parseInt(document.getElementById('modal-urgency').value);
-    const easiness = parseInt(document.getElementById('modal-easiness').value);
-    const interest = parseInt(document.getElementById('modal-interest').value);
-    const dependency = parseInt(document.getElementById('modal-dependency').value);
+    const importanceEl = document.getElementById('modal-importance');
+    const urgencyEl = document.getElementById('modal-urgency');
+    const easinessEl = document.getElementById('modal-easiness');
+    const interestEl = document.getElementById('modal-interest');
+    const dependencyEl = document.getElementById('modal-dependency');
+    const scoreEl = document.getElementById('modal-priority-score');
+
+    if (!importanceEl || !urgencyEl || !easinessEl || !interestEl || !dependencyEl || !scoreEl) {
+      console.warn('Modal priority elements not found');
+      return;
+    }
+
+    const importance = parseInt(importanceEl.value);
+    const urgency = parseInt(urgencyEl.value);
+    const easiness = parseInt(easinessEl.value);
+    const interest = parseInt(interestEl.value);
+    const dependency = parseInt(dependencyEl.value);
 
     // Weighted scoring system
     const weights = { importance: 5, urgency: 4, easiness: 3, interest: 2, dependency: 1 };
@@ -530,41 +562,102 @@ class TaskManager {
                       (easiness * weights.easiness) + (interest * weights.interest) + 
                       (dependency * weights.dependency);
 
-    document.getElementById('modal-priority-score').textContent = totalScore;
+    scoreEl.textContent = totalScore;
   }
 
   async saveNewTask(modalOverlay) {
-    const text = document.getElementById('task-text').value.trim();
+    const textInput = document.getElementById('task-text');
+    if (!textInput) {
+      window.UI.showError('Task input field not found.');
+      return;
+    }
+
+    const text = textInput.value.trim();
     
     if (!text) {
       window.UI.showError('Task text cannot be empty.');
+      textInput.focus();
       return;
     }
 
-    const priority = this.getModalPriorityData();
-    await this.addTask(text, priority);
-    this.closeTaskModal(modalOverlay);
+    // Disable save button to prevent double submission
+    const saveBtn = document.getElementById('modal-save-btn');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Adding...';
+    }
+
+    try {
+      const priority = this.getModalPriorityData();
+      await this.addTask(text, priority);
+      this.closeTaskModal(modalOverlay);
+    } catch (error) {
+      console.error('Error saving new task:', error);
+      window.UI.showError('Failed to add task. Please try again.');
+      
+      // Re-enable save button
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Add Task';
+      }
+    }
   }
 
   async saveEditedTask(taskId, modalOverlay) {
-    const newText = document.getElementById('task-text').value.trim();
-    
-    if (!newText) {
-      window.UI.showError('Task text cannot be empty.');
+    const textInput = document.getElementById('task-text');
+    if (!textInput) {
+      window.UI.showError('Task input field not found.');
       return;
     }
 
-    const newPriority = this.getModalPriorityData();
-    await this.editTask(taskId, newText, newPriority);
-    this.closeTaskModal(modalOverlay);
+    const newText = textInput.value.trim();
+    
+    if (!newText) {
+      window.UI.showError('Task text cannot be empty.');
+      textInput.focus();
+      return;
+    }
+
+    // Disable save button to prevent double submission
+    const saveBtn = document.getElementById('modal-save-btn');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
+    try {
+      const newPriority = this.getModalPriorityData();
+      await this.editTask(taskId, newText, newPriority);
+      this.closeTaskModal(modalOverlay);
+    } catch (error) {
+      console.error('Error saving edited task:', error);
+      window.UI.showError('Failed to update task. Please try again.');
+      
+      // Re-enable save button
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+      }
+    }
   }
 
   getModalPriorityData() {
-    const importance = parseInt(document.getElementById('modal-importance').value);
-    const urgency = parseInt(document.getElementById('modal-urgency').value);
-    const easiness = parseInt(document.getElementById('modal-easiness').value);
-    const interest = parseInt(document.getElementById('modal-interest').value);
-    const dependency = parseInt(document.getElementById('modal-dependency').value);
+    const importanceEl = document.getElementById('modal-importance');
+    const urgencyEl = document.getElementById('modal-urgency');
+    const easinessEl = document.getElementById('modal-easiness');
+    const interestEl = document.getElementById('modal-interest');
+    const dependencyEl = document.getElementById('modal-dependency');
+
+    if (!importanceEl || !urgencyEl || !easinessEl || !interestEl || !dependencyEl) {
+      console.warn('Modal priority elements not found, using default values');
+      return { importance: 1, urgency: 1, easiness: 1, interest: 1, dependency: 1, totalScore: 15 };
+    }
+
+    const importance = parseInt(importanceEl.value);
+    const urgency = parseInt(urgencyEl.value);
+    const easiness = parseInt(easinessEl.value);
+    const interest = parseInt(interestEl.value);
+    const dependency = parseInt(dependencyEl.value);
 
     const weights = { importance: 5, urgency: 4, easiness: 3, interest: 2, dependency: 1 };
     const totalScore = (importance * weights.importance) + (urgency * weights.urgency) + 
@@ -583,7 +676,20 @@ class TaskManager {
 
   closeTaskModal(modalOverlay) {
     if (modalOverlay && modalOverlay.parentNode) {
-      modalOverlay.parentNode.removeChild(modalOverlay);
+      // Clean up event listeners
+      if (modalOverlay._escapeHandler) {
+        document.removeEventListener('keydown', modalOverlay._escapeHandler);
+      }
+      
+      // Add fade out animation
+      modalOverlay.style.opacity = '0';
+      modalOverlay.style.transition = 'opacity 0.3s ease-out';
+      
+      setTimeout(() => {
+        if (modalOverlay.parentNode) {
+          modalOverlay.parentNode.removeChild(modalOverlay);
+        }
+      }, 300);
     }
   }
 
@@ -608,6 +714,50 @@ class TaskManager {
     }
     this.tasks = [];
     this.userId = null;
+  }
+
+  updatePriorityValueDisplay(value, valueElement) {
+    const text = this.getPriorityText(value);
+    valueElement.textContent = text;
+    
+    // Remove existing priority classes
+    valueElement.classList.remove('low', 'medium', 'high');
+    
+    // Add appropriate class based on value
+    if (value == 1) {
+      valueElement.classList.add('low');
+    } else if (value == 2) {
+      valueElement.classList.add('medium');
+    } else if (value == 3) {
+      valueElement.classList.add('high');
+    }
+  }
+
+  // Enhanced function to validate modal form
+  validateModalForm() {
+    const textInput = document.getElementById('task-text');
+    if (!textInput) return false;
+    
+    const text = textInput.value.trim();
+    if (!text) {
+      textInput.classList.add('invalid');
+      return false;
+    }
+    
+    textInput.classList.remove('invalid');
+    return true;
+  }
+
+  // Function to show modal loading state
+  setModalLoadingState(isLoading) {
+    const modal = document.querySelector('.task-modal');
+    if (!modal) return;
+    
+    if (isLoading) {
+      modal.classList.add('modal-loading');
+    } else {
+      modal.classList.remove('modal-loading');
+    }
   }
 }
 
