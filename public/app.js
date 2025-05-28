@@ -98,7 +98,20 @@ class TaskWiseApp {
       }
       
       window.UI.showHomePage(userInfo);
+    } else if (window.AuthManager.isGuestMode()) {
+      // User is in guest mode
+      console.log('Detected guest mode, setting up guest experience');
+      
+      // Get guest user info from AuthManager
+      const guestInfo = window.AuthManager.getUser();
+      
+      // Initialize TaskManager for guest mode
+      window.TaskManager.setGuestMode(guestInfo?.id || 'guest_fallback');
+      
+      // Show home page in guest mode
+      window.UI.showHomePage(guestInfo);
     } else {
+      // No authentication - show login page
       window.UI.showLoginPage();
     }
   }

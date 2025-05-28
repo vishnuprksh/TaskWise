@@ -119,6 +119,104 @@ header h1 {
     text-align: center;
 }
 
+/* Guest Mode Styles */
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: 25px 0;
+    color: var(--text-muted);
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.login-divider span {
+    padding: 0 15px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.skip-signin-btn {
+    background: var(--button-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.skip-signin-btn:hover {
+    background: var(--button-secondary-hover);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.guest-mode-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.guest-mode-note small {
+    color: var(--text-muted);
+}
+
+/* Guest Mode Banner */
+.guest-mode-banner {
+    background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+    border: 1px solid #e17055;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(225, 112, 85, 0.2);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #2d3436;
+}
+
+.banner-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.banner-text {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.banner-upgrade-btn {
+    background: #e17055;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.banner-upgrade-btn:hover {
+    background: #d63031;
+    transform: translateY(-1px);
+}
+
 /* Task Manager Styles */
 .task-manager {
     background: var(--card-bg);

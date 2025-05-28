@@ -53,11 +53,31 @@
                          data-shape="rectangular"
                          data-logo_alignment="left">
                     </div>
+                    
+                    <div class="login-divider">
+                        <span>or</span>
+                    </div>
+                    
+                    <button id="skip-signin-btn" class="skip-signin-btn">
+                        Continue as Guest
+                    </button>
+                    <p class="guest-mode-note">
+                        <small>Your tasks will only be saved locally. Sign in later to sync across devices.</small>
+                    </p>
                 </div>
             </div>
 
             <!-- Home Section (hidden initially) -->
             <div id="home-section" class="section hidden">
+                <!-- Guest Mode Banner -->
+                <div id="guest-mode-banner" class="guest-mode-banner hidden">
+                    <div class="banner-content">
+                        <span class="banner-icon">👤</span>
+                        <span class="banner-text">You're using TaskWise as a guest. Your tasks are saved locally.</span>
+                        <button class="banner-upgrade-btn">Sign In to Sync</button>
+                    </div>
+                </div>
+                
                 <div class="task-manager">
                     <!-- Simplified header with profile in top right -->
                     <div class="app-header">

@@ -12,6 +12,9 @@ class UIManager {
       userName: document.getElementById('user-name'),
       userPhoto: document.getElementById('user-photo'),
       signOutBtn: document.getElementById('sign-out-btn'),
+      skipSigninBtn: document.getElementById('skip-signin-btn'),
+      guestModeBanner: document.getElementById('guest-mode-banner'),
+      bannerUpgradeBtn: document.querySelector('.banner-upgrade-btn'),
       // Task management elements
       addTaskBtn: document.getElementById('add-task-btn'),
       taskList: document.getElementById('task-list'),
@@ -29,7 +32,26 @@ class UIManager {
   setupEventListeners() {
     if (this.elements.signOutBtn) {
       this.elements.signOutBtn.addEventListener('click', () => {
-        window.AuthManager.signOut();
+        // Check if in guest mode - if so, upgrade to authenticated user
+        if (window.AuthManager.isGuestMode()) {
+          window.AuthManager.upgradeGuestToUser();
+        } else {
+          window.AuthManager.signOut();
+        }
+      });
+    }
+
+    // Skip sign-in button event listener
+    if (this.elements.skipSigninBtn) {
+      this.elements.skipSigninBtn.addEventListener('click', () => {
+        window.AuthManager.signInAsGuest();
+      });
+    }
+
+    // Guest mode banner upgrade button
+    if (this.elements.bannerUpgradeBtn) {
+      this.elements.bannerUpgradeBtn.addEventListener('click', () => {
+        window.AuthManager.upgradeGuestToUser();
       });
     }
 
@@ -90,12 +112,46 @@ class UIManager {
     this.elements.loginSection?.classList.add('hidden');
     this.elements.homeSection?.classList.remove('hidden');
     
+    // Handle guest mode (userInfo might be null for guest mode)
+    const isGuestMode = !userInfo || userInfo.isGuest;
+    const displayName = userInfo?.name || 'Guest User';
+    const userPicture = userInfo?.picture || null;
+    
+    // Show/hide guest mode banner
+    if (this.elements.guestModeBanner) {
+      if (isGuestMode) {
+        this.elements.guestModeBanner.classList.remove('hidden');
+      } else {
+        this.elements.guestModeBanner.classList.add('hidden');
+      }
+    }
+    
     if (this.elements.userName) {
-      this.elements.userName.textContent = userInfo.name;
+      this.elements.userName.textContent = displayName;
     }
     if (this.elements.userPhoto) {
-      this.elements.userPhoto.src = userInfo.picture;
-      this.elements.userPhoto.alt = userInfo.name;
+      this.elements.userPhoto.src = userPicture || '';
+      this.elements.userPhoto.alt = displayName;
+      
+      // Hide photo if no picture provided (guest mode)
+      if (!userPicture) {
+        this.elements.userPhoto.style.display = 'none';
+      } else {
+        this.elements.userPhoto.style.display = 'block';
+      }
+    }
+    
+    // Update sign out button for guest mode
+    if (this.elements.signOutBtn) {
+      if (isGuestMode) {
+        // Hide the sign out button in guest mode since we have the banner upgrade button
+        this.elements.signOutBtn.style.display = 'none';
+      } else {
+        // Show and configure for authenticated users
+        this.elements.signOutBtn.style.display = 'block';
+        this.elements.signOutBtn.textContent = 'Sign Out';
+        this.elements.signOutBtn.title = 'Sign out of your account';
+      }
     }
   }
 

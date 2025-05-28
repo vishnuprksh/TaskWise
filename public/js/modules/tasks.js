@@ -5,19 +5,35 @@ class TaskManager {
     this.currentFilter = 'all';
     this.userId = null;
     this.unsubscribe = null;
+    this.isGuestMode = false;
   }
 
   setUser(userId) {
     console.log('TaskManager: Setting user ID:', userId);
     this.userId = userId;
+    this.isGuestMode = false;
     this.setupRealtimeListener();
   }
 
+  setGuestMode(userId) {
+    console.log('TaskManager: Setting guest mode for user ID:', userId);
+    this.userId = userId;
+    this.isGuestMode = true;
+    this.loadGuestTasks();
+  }
+
   setupRealtimeListener() {
-    if (!this.userId || !window.FirebaseManager.isInitialized()) {
+    if (!this.userId || (!window.FirebaseManager.isInitialized() && !this.isGuestMode)) {
       console.warn('TaskManager: Cannot setup listener - missing userId or Firebase not initialized');
       console.log('UserId:', this.userId);
       console.log('Firebase initialized:', window.FirebaseManager.isInitialized());
+      console.log('Guest mode:', this.isGuestMode);
+      return;
+    }
+
+    // Skip Firebase listener for guest mode
+    if (this.isGuestMode) {
+      console.log('TaskManager: Guest mode - skipping Firebase listener');
       return;
     }
 
@@ -65,6 +81,39 @@ class TaskManager {
     }
   }
 
+  loadGuestTasks() {
+    console.log('TaskManager: Loading guest tasks from localStorage');
+    try {
+      const guestTasks = localStorage.getItem('guestTasks');
+      if (guestTasks) {
+        this.tasks = JSON.parse(guestTasks);
+        console.log('TaskManager: Loaded', this.tasks.length, 'guest tasks');
+      } else {
+        this.tasks = [];
+        console.log('TaskManager: No guest tasks found, starting fresh');
+      }
+      this.renderTasks();
+      this.updateStats();
+    } catch (error) {
+      console.error('TaskManager: Error loading guest tasks:', error);
+      this.tasks = [];
+      this.renderTasks();
+      this.updateStats();
+    }
+  }
+
+  saveGuestTasks() {
+    if (!this.isGuestMode) return;
+    
+    try {
+      localStorage.setItem('guestTasks', JSON.stringify(this.tasks));
+      console.log('TaskManager: Saved', this.tasks.length, 'guest tasks to localStorage');
+    } catch (error) {
+      console.error('TaskManager: Error saving guest tasks:', error);
+      window.UI.showError('Failed to save tasks locally.');
+    }
+  }
+
   async addTask(text, priority) {
     if (!text.trim() || !this.userId) {
       console.warn('TaskManager: Cannot add task - missing text or userId');
@@ -72,30 +121,54 @@ class TaskManager {
     }
 
     try {
-      console.log('TaskManager: Adding task for user:', this.userId);
+      console.log('TaskManager: Adding task for user:', this.userId, 'Guest mode:', this.isGuestMode);
       
-      const db = window.FirebaseManager.getFirestore();
-      const tasksRef = db.collection('users').doc(this.userId).collection('tasks');
-      
-      const taskData = {
-        text: text.trim(),
-        completed: false,
-        priority: priority,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
+      if (this.isGuestMode) {
+        // Guest mode - save to localStorage
+        const taskData = {
+          id: 'guest_task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          text: text.trim(),
+          completed: false,
+          priority: priority,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
 
-      console.log('TaskManager: Task data to be saved:', taskData);
-      
-      const docRef = await tasksRef.add(taskData);
-      console.log('TaskManager: Task added successfully with ID:', docRef.id);
+        console.log('TaskManager: Guest task data to be saved:', taskData);
+        
+        this.tasks.unshift(taskData); // Add to beginning of array
+        this.saveGuestTasks();
+        this.renderTasks();
+        this.updateStats();
+        
+        console.log('TaskManager: Guest task added successfully with ID:', taskData.id);
+      } else {
+        // Firebase mode
+        const db = window.FirebaseManager.getFirestore();
+        const tasksRef = db.collection('users').doc(this.userId).collection('tasks');
+        
+        const taskData = {
+          text: text.trim(),
+          completed: false,
+          priority: priority,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        console.log('TaskManager: Task data to be saved:', taskData);
+        
+        const docRef = await tasksRef.add(taskData);
+        console.log('TaskManager: Task added successfully with ID:', docRef.id);
+      }
       
     } catch (error) {
       console.error('TaskManager: Error adding task:', error);
       console.error('TaskManager: Error code:', error.code);
       console.error('TaskManager: Error message:', error.message);
       
-      if (error.code === 'permission-denied') {
+      if (this.isGuestMode) {
+        window.UI.showError('Failed to save task locally. Please try again.');
+      } else if (error.code === 'permission-denied') {
         window.UI.showError('Permission denied. Cannot save task to database.');
       } else {
         window.UI.showError('Failed to add task. Please try again.');
@@ -110,17 +183,28 @@ class TaskManager {
       const task = this.tasks.find(t => t.id === taskId);
       if (!task) return;
 
-      const db = window.FirebaseManager.getFirestore();
-      const taskRef = db.collection('users').doc(this.userId).collection('tasks').doc(taskId);
-      
-      await taskRef.update({
-        completed: !task.completed,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      if (this.isGuestMode) {
+        // Guest mode - update in memory and save to localStorage
+        task.completed = !task.completed;
+        task.updatedAt = new Date();
+        this.saveGuestTasks();
+        this.renderTasks();
+        this.updateStats();
+        console.log('TaskManager: Guest task toggled successfully');
+      } else {
+        // Firebase mode
+        const db = window.FirebaseManager.getFirestore();
+        const taskRef = db.collection('users').doc(this.userId).collection('tasks').doc(taskId);
+        
+        await taskRef.update({
+          completed: !task.completed,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-      console.log('Task toggled successfully');
+        console.log('TaskManager: Task toggled successfully');
+      }
     } catch (error) {
-      console.error('Error toggling task:', error);
+      console.error('TaskManager: Error toggling task:', error);
       window.UI.showError('Failed to update task. Please try again.');
     }
   }
@@ -129,13 +213,23 @@ class TaskManager {
     if (!this.userId) return;
 
     try {
-      const db = window.FirebaseManager.getFirestore();
-      const taskRef = db.collection('users').doc(this.userId).collection('tasks').doc(taskId);
-      
-      await taskRef.delete();
-      console.log('Task deleted successfully');
+      if (this.isGuestMode) {
+        // Guest mode - remove from memory and save to localStorage
+        this.tasks = this.tasks.filter(t => t.id !== taskId);
+        this.saveGuestTasks();
+        this.renderTasks();
+        this.updateStats();
+        console.log('TaskManager: Guest task deleted successfully');
+      } else {
+        // Firebase mode
+        const db = window.FirebaseManager.getFirestore();
+        const taskRef = db.collection('users').doc(this.userId).collection('tasks').doc(taskId);
+        
+        await taskRef.delete();
+        console.log('TaskManager: Task deleted successfully');
+      }
     } catch (error) {
-      console.error('Error deleting task:', error);
+      console.error('TaskManager: Error deleting task:', error);
       window.UI.showError('Failed to delete task. Please try again.');
     }
   }
@@ -144,24 +238,43 @@ class TaskManager {
     if (!newText.trim() || !this.userId) return;
 
     try {
-      const db = window.FirebaseManager.getFirestore();
-      const taskRef = db.collection('users').doc(this.userId).collection('tasks').doc(taskId);
-      
-      const updateData = {
-        text: newText.trim(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
+      if (this.isGuestMode) {
+        // Guest mode - update in memory and save to localStorage
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task) return;
 
-      // Update priority if provided
-      if (newPriority) {
-        updateData.priority = newPriority;
+        task.text = newText.trim();
+        task.updatedAt = new Date();
+        
+        if (newPriority) {
+          task.priority = newPriority;
+        }
+
+        this.saveGuestTasks();
+        this.renderTasks();
+        this.updateStats();
+        console.log('TaskManager: Guest task updated successfully');
+      } else {
+        // Firebase mode
+        const db = window.FirebaseManager.getFirestore();
+        const taskRef = db.collection('users').doc(this.userId).collection('tasks').doc(taskId);
+        
+        const updateData = {
+          text: newText.trim(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Update priority if provided
+        if (newPriority) {
+          updateData.priority = newPriority;
+        }
+        
+        await taskRef.update(updateData);
+
+        console.log('TaskManager: Task updated successfully');
       }
-      
-      await taskRef.update(updateData);
-
-      console.log('Task updated successfully');
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error('TaskManager: Error updating task:', error);
       window.UI.showError('Failed to update task. Please try again.');
     }
   }
@@ -714,6 +827,7 @@ class TaskManager {
     }
     this.tasks = [];
     this.userId = null;
+    this.isGuestMode = false;
   }
 
   updatePriorityValueDisplay(value, valueElement) {
@@ -757,6 +871,89 @@ class TaskManager {
       modal.classList.add('modal-loading');
     } else {
       modal.classList.remove('modal-loading');
+    }
+  }
+
+  // Get guest tasks for migration
+  getGuestTasks() {
+    if (!this.isGuestMode) {
+      console.log('TaskManager: Not in guest mode, returning empty array');
+      return [];
+    }
+    
+    console.log('TaskManager: Returning guest tasks for migration:', this.tasks.length);
+    return [...this.tasks]; // Return a copy of the tasks
+  }
+
+  // Show success message
+  showSuccessMessage(message) {
+    const successDiv = document.createElement('div');
+    successDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #27ae60;
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      z-index: 1000;
+      max-width: 300px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    `;
+    successDiv.textContent = message;
+    document.body.appendChild(successDiv);
+    
+    setTimeout(() => {
+      if (successDiv.parentNode) {
+        successDiv.parentNode.removeChild(successDiv);
+      }
+    }, 5000);
+  }
+
+  // Migrate guest tasks to authenticated user Firebase
+  async migrateTasks(guestTasks) {
+    if (!this.userId || this.isGuestMode) {
+      console.error('TaskManager: Cannot migrate - not authenticated or still in guest mode');
+      return;
+    }
+
+    if (!guestTasks || guestTasks.length === 0) {
+      console.log('TaskManager: No tasks to migrate');
+      return;
+    }
+
+    console.log('TaskManager: Starting migration of', guestTasks.length, 'tasks');
+
+    try {
+      const db = window.FirebaseManager.getFirestore();
+      const tasksRef = db.collection('users').doc(this.userId).collection('tasks');
+
+      // Add each guest task to Firebase
+      for (const guestTask of guestTasks) {
+        const taskData = {
+          text: guestTask.text,
+          completed: guestTask.completed,
+          priority: guestTask.priority || 1,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        console.log('TaskManager: Migrating task:', guestTask.text);
+        await tasksRef.add(taskData);
+      }
+
+      console.log('TaskManager: Successfully migrated all tasks to Firebase');
+      
+      // Show success message
+      if (guestTasks.length > 0) {
+        this.showSuccessMessage(`Successfully synced ${guestTasks.length} task${guestTasks.length === 1 ? '' : 's'}!`);
+      } else {
+        console.log('TaskManager: No tasks to migrate, upgrade completed');
+      }
+      
+    } catch (error) {
+      console.error('TaskManager: Error migrating tasks:', error);
+      throw error; // Re-throw to allow AuthManager to handle it
     }
   }
 }

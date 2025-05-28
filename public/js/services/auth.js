@@ -135,6 +135,9 @@ class AuthManager {
       // Initialize Firebase auth and TaskManager with user
       await this.initializeFirebaseAuth(userInfo, response.credential);
       
+      // Check for pending task migration after successful login
+      await this.migrateGuestTasks();
+      
       window.UI.showHomePage(userInfo);
     } catch (error) {
       console.error('Error handling credential response:', error);
@@ -195,21 +198,122 @@ class AuthManager {
     return localStorage.getItem('isLoggedIn') === 'true' && this.getUser() !== null;
   }
 
+  signInAsGuest() {
+    console.log('AuthManager: Starting guest mode');
+    
+    const guestInfo = {
+      id: 'guest_' + Date.now(),
+      name: 'Guest User',
+      email: 'guest@local',
+      picture: null,
+      isGuest: true
+    };
+    
+    this.setUser(guestInfo);
+    localStorage.setItem('isGuestMode', 'true');
+    
+    // Initialize TaskManager with guest user ID but use localStorage instead of Firebase
+    window.TaskManager.setGuestMode(guestInfo.id);
+    
+    window.UI.showHomePage(guestInfo);
+  }
+
+  isGuestMode() {
+    return localStorage.getItem('isGuestMode') === 'true';
+  }
+
   signOut() {
+    console.log('AuthManager: Starting sign out process');
+    
     // Clean up TaskManager data
     if (window.TaskManager) {
       window.TaskManager.cleanup();
     }
     
     this.user = null;
+    this.firebaseUser = null;
     localStorage.removeItem('userInfo');
     localStorage.removeItem('isLoggedIn');
+    
+    // Clean up guest mode specific data
+    const wasGuestMode = this.isGuestMode();
+    localStorage.removeItem('isGuestMode');
+    
+    if (wasGuestMode) {
+      localStorage.removeItem('guestTasks');
+      console.log('AuthManager: Cleaned up guest mode data');
+    }
+    
+    // Clean up any pending migration data
+    localStorage.removeItem('pendingMigrationTasks');
     
     if (window.google && window.google.accounts) {
       google.accounts.id.disableAutoSelect();
     }
     
+    console.log('AuthManager: Sign out completed');
     window.UI.showLoginPage();
+  }
+
+  upgradeGuestToUser() {
+    console.log('AuthManager: Starting guest to user upgrade');
+    
+    // Store guest tasks before clearing guest mode
+    const guestTasks = window.TaskManager.getGuestTasks();
+    console.log('AuthManager: Found guest tasks to migrate:', guestTasks?.length || 0);
+    
+    // Clear guest mode flag but keep tasks temporarily
+    localStorage.removeItem('isGuestMode');
+    
+    // Show login page for user to authenticate
+    window.UI.showLoginPage();
+    
+    // Store the guest tasks for migration after successful login (even if empty)
+    if (guestTasks) {
+      localStorage.setItem('pendingMigrationTasks', JSON.stringify(guestTasks));
+      if (guestTasks.length > 0) {
+        console.log('AuthManager: Stored', guestTasks.length, 'tasks for post-login migration');
+      } else {
+        console.log('AuthManager: No tasks to migrate, but preparing for user upgrade');
+      }
+    }
+  }
+
+  async migrateGuestTasks() {
+    console.log('AuthManager: Starting guest task migration');
+    
+    const pendingTasks = localStorage.getItem('pendingMigrationTasks');
+    if (!pendingTasks) {
+      console.log('AuthManager: No pending tasks to migrate');
+      return;
+    }
+    
+    try {
+      const tasks = JSON.parse(pendingTasks);
+      console.log('AuthManager: Migrating', tasks.length, 'tasks to authenticated user');
+      
+      // Migrate tasks to Firebase through TaskManager
+      if (window.TaskManager && tasks.length > 0) {
+        await window.TaskManager.migrateTasks(tasks);
+        console.log('AuthManager: Task migration completed successfully');
+      }
+      
+      // Clean up pending migration data and guest tasks
+      localStorage.removeItem('pendingMigrationTasks');
+      localStorage.removeItem('guestTasks');
+      
+      // Show a welcome message for successful upgrade
+      if (tasks.length > 0) {
+        console.log('AuthManager: User successfully upgraded from guest mode with task migration');
+      } else {
+        console.log('AuthManager: User successfully upgraded from guest mode');
+      }
+      
+    } catch (error) {
+      console.error('AuthManager: Failed to migrate guest tasks:', error);
+      // Keep the pending tasks for retry
+      window.UI.showError('Failed to migrate your tasks. Please try signing in again.');
+    }
   }
 }
 
