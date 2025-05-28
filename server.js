@@ -27,6 +27,15 @@ app.use(express.static('public'));
 // Use PWA routes
 app.use('/', pwaRoutes);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: config.app.version
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   Logger.error('Unhandled error:', err);
