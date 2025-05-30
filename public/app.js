@@ -21,11 +21,17 @@ class TaskWiseApp {
       // Initialize PWA functionality
       await window.PWAManager.init();
 
+      // Initialize Notification Manager
+      await window.NotificationManager.init();
+
       // Initialize Google Sign-In
       await this.initializeGoogleSignIn();
 
       // Check login status and show appropriate page
       this.checkLoginStatus();
+
+      // Setup notification click listener
+      this.setupNotificationMessageHandler();
 
       this.initialized = true;
       console.log('TaskWise app initialized successfully');
@@ -113,6 +119,60 @@ class TaskWiseApp {
     } else {
       // No authentication - show login page
       window.UI.showLoginPage();
+    }
+  }
+
+  setupNotificationMessageHandler() {
+    // Listen for messages from service worker (notification clicks)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        console.log('App: Received message from service worker:', event.data);
+        
+        if (event.data.type === 'NOTIFICATION_CLICK') {
+          this.handleNotificationAction(event.data.action, event.data.notificationData);
+        }
+      });
+    }
+  }
+
+  handleNotificationAction(action, notificationData) {
+    console.log('App: Handling notification action:', action, notificationData);
+    
+    // Ensure the app is visible and focused
+    if (window.focus) {
+      window.focus();
+    }
+    
+    switch (action) {
+      case 'complete':
+        if (notificationData.task && notificationData.task.id) {
+          // Mark the task as complete
+          this.completeTaskFromNotification(notificationData.task.id);
+        }
+        break;
+        
+      case 'view':
+      default:
+        // Just highlight the task or focus on the task list
+        if (notificationData.task && notificationData.task.id) {
+          window.NotificationManager.highlightTask(notificationData.task.id);
+        }
+        break;
+    }
+  }
+
+  async completeTaskFromNotification(taskId) {
+    try {
+      if (window.TaskManager) {
+        await window.TaskManager.toggleTask(taskId);
+        console.log('App: Task completed from notification:', taskId);
+        
+        // Show a success message
+        window.UI.showSuccess('Task completed! 🎉');
+      }
+    } catch (error) {
+      console.error('App: Error completing task from notification:', error);
+      window.UI.showError('Failed to complete task. Please try again.');
     }
   }
 }
