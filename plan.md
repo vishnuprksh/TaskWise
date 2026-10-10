@@ -11,7 +11,7 @@ Migrate the Android app from Flutter to React Native in controlled phases while 
 - User-scoped Firestore collections hold projects, tasks, and Pomodoro sessions (`lib/services/firestore_service.dart`). Task recurrence and priority calculation are domain logic and should be migrated separately from UI (`lib/models/task.dart`, `lib/services/recurrence_service.dart`).
 - Scheduler, voice input, local notifications, and home-screen widgets depend on native/plugin integrations and need explicit React Native equivalents (`lib/services/scheduler_service.dart`, `lib/services/voice_service.dart`, `lib/services/notification_service.dart`, `lib/services/widget_service.dart`).
 - The existing `react-native/` directory contained a lockfile and installed dependencies but no app source, manifest, or Android project. Its lockfile already describes React Native 0.84, TypeScript, Firebase, and navigation dependencies.
-- No Graphify skill or generated graph is available in this workspace/session. These findings are based on the source and manifests listed above; Graphify synchronization remains a follow-up once its tooling is available.
+- The Graphify skill/CLI is not installed in this environment. The maintained architecture map at `graphify-out/taskwise-architecture.mmd` was updated directly from the source and manifests to record runtime flows, backend dependencies, migration boundaries, and deferred implementation decisions.
 
 ## Phases
 
@@ -24,6 +24,22 @@ Migrate the Android app from Flutter to React Native in controlled phases while 
 | 5. Native integrations and release | Replace notifications, voice/TTS, and home widgets with suitable RN/native integrations; verify permissions, lifecycle behavior, performance, accessibility, and release signing. | Release build and regression checklist pass; rollout/cutover approved before retiring Flutter Android entry point. |
 
 ## Phase 1 File Overviews
+
+### `graphify-out/taskwise-architecture.mmd`
+
+## Objective
+
+Maintain a graph of the current Flutter runtime, Firebase dependencies, and the React Native migration boundary.
+
+## changelog table
+
+| # | date | details | reasoning | reference |
+|---|---|---|---|---|
+| 1 | 2026-10-10 | Added Flutter startup/auth/data/native-service relationships and the Phase 1 RN Android boundary with future parity links. | Keeps architecture knowledge connected to the implementation while the two app shells coexist. | `lib/main.dart`; `lib/services/`; `react-native/App.tsx` |
+
+## Results/Takeaways
+
+Flutter remains the production implementation. React Native Phase 1 is an Android foundation only; later phases must preserve Firestore paths and behavior before cutover.
 
 ### `react-native/package.json`
 
@@ -132,6 +148,7 @@ Keep React Native dependencies and generated Android build files out of source c
 | # | date | details | reasoning | reference |
 |---|---|---|---|---|
 | 1 | 2026-10-10 | Added RN dependency/build ignores and an exception for the generated Android debug keystore. | The repository-level ignore rules did not exclude `node_modules` and globally ignored keystores. | React Native Community CLI template `.gitignore` |
+| 2 | 2026-10-10 | Allowed only `graphify-out/taskwise-architecture.mmd` through the Graphify output ignore rule. | Preserve the maintained architecture graph while keeping other generated Graphify artifacts ignored. | `graphify-out/taskwise-architecture.mmd` |
 
 ## Results/Takeaways
 
@@ -151,4 +168,4 @@ Track the Android migration sequence, architecture boundaries, and Phase 1 file 
 
 ## Results/Takeaways
 
-Phase 1 creates a native foundation only. Feature parity, Firebase configuration, Graphify synchronization, and Flutter retirement remain future work.
+Phase 1 creates a native foundation only. Feature parity, Firebase configuration, generated Graphify synchronization, and Flutter retirement remain future work.

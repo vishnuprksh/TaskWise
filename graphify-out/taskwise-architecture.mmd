@@ -1,0 +1,56 @@
+flowchart TD
+  subgraph Flutter[Current Flutter production app]
+    Main[lib/main.dart<br/>Firebase + local notifications startup]
+    AuthState[authStateProvider]
+    AuthService[AuthService]
+    Login[LoginScreen]
+    Home[HomeScreen]
+    Projects[ProjectsScreen]
+    Scheduler[SchedulerScreen]
+    Timer[TimerScreen]
+    Reports[PomodoroReportScreen]
+    Settings[SettingsScreen]
+    FirestoreService[FirestoreService<br/>user-scoped streams and writes]
+    TaskModel[Task model<br/>priority + recurrence]
+    ProjectModel[Project model]
+    SessionModel[PomodoroSession model]
+    Recurrence[RecurrenceService]
+    NativeServices[Notifications / voice / TTS / widgets]
+  end
+
+  subgraph Firebase[Firebase backend]
+    FirebaseAuth[Firebase Authentication]
+    Firestore[(Cloud Firestore<br/>users/{uid}/tasks, projects, pomodoro_sessions)]
+    Messaging[Firebase Messaging]
+  end
+
+  subgraph ReactNative[React Native Android migration]
+    RNAndroid[Android host<br/>com.taskwise]
+    RNEntry[App.tsx<br/>SafeArea foundation screen]
+    RNPackage[RN 0.84 + TypeScript<br/>Firebase and navigation dependencies]
+    RNFuture[Later phases<br/>auth, domain, workflows, native integrations]
+  end
+
+  Main --> AuthState
+  Main --> NativeServices
+  AuthState --> AuthService
+  AuthService --> FirebaseAuth
+  AuthState -->|signed out| Login
+  AuthState -->|signed in| Home
+  Home --> FirestoreService
+  Home --> Projects
+  Home --> Scheduler
+  Home --> Timer
+  Home --> Reports
+  Home --> Settings
+  FirestoreService --> Firestore
+  FirestoreService --> TaskModel
+  FirestoreService --> ProjectModel
+  FirestoreService --> SessionModel
+  TaskModel --> Recurrence
+  NativeServices --> Messaging
+  RNAndroid --> RNEntry
+  RNPackage --> RNEntry
+  RNEntry -. scoped to Phase 1 .-> RNFuture
+  RNFuture -. must preserve schema and behavior .-> Firestore
+  RNFuture -. replaces after parity .-> Flutter
