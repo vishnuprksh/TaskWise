@@ -1,0 +1,9 @@
+node_modules/
+.gradle/
+.cxx/
+build/
+local.properties
+*.hprof
+*.iml
+*.keystore
+!android/app/debug.keystore
