@@ -23,6 +23,24 @@ Migrate the Android app from Flutter to React Native in controlled phases while 
 | 4. Primary workflows | Implement home/task management, project management, scheduling, Pomodoro timer/report, and settings. Preserve sorting, filtering, recurrence, and focus metrics. | Each workflow has focused tests and is verified on Android against the Flutter behavior. |
 | 5. Native integrations and release | Replace notifications, voice/TTS, and home widgets with suitable RN/native integrations; verify permissions, lifecycle behavior, performance, accessibility, and release signing. | Release build and regression checklist pass; rollout/cutover approved before retiring Flutter Android entry point. |
 
+## Phase 1 Completion Record
+
+**Status: Complete**
+
+Delivered an official React Native 0.84 Android host at `react-native/android` (`applicationId` and namespace `com.taskwise`), a TypeScript app entry screen, npm scripts and lockfile, Jest smoke test, and source-control rules for dependencies/build output. The Flutter Android app remains unchanged and is still the production implementation.
+
+| Verification | Result |
+|---|---|
+| `npm ci` | Passed using the existing lockfile. |
+| `npm test -- --runInBand` | Passed: 1 suite, 1 test. |
+| `npm run typecheck` | Passed. |
+| `npm run lint` | Passed. |
+| `npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output /tmp/taskwise.android.bundle --assets-dest /tmp/taskwise-android-assets` | Passed; Metro generated the Android JavaScript bundle. |
+| `npx react-native config` | Passed; resolved Android package `com.taskwise` and native Firebase/safe-area/screens dependencies. |
+| Android Gradle debug build / device launch | Not run: no Android SDK is configured in this environment. Native APK compilation and runtime remain unverified. |
+
+The Phase 1 exit criteria in the phase table are met: the project configuration and Android host are present, and the app smoke test and typecheck pass. Native compilation is tracked as an environment limitation, not as verified behavior.
+
 ## Phase 1 File Overviews
 
 ### `graphify-out/taskwise-architecture.mmd`
@@ -164,7 +182,7 @@ Track the Android migration sequence, architecture boundaries, and Phase 1 file 
 
 | # | date | details | reasoning | reference |
 |---|---|---|---|---|
-| 1 | 2026-10-10 | Added architecture findings, five migration phases, and per-file Phase 1 overviews; documented source-control ignores. | Makes Phase 1 explicit and defines verifiable gates before feature work or cutover. | Flutter `lib/`; React Native scaffold |
+| 1 | 2026-10-10 | Added architecture findings, five migration phases, per-file Phase 1 overviews, and explicit Phase 1 completion evidence. | Makes scope, verified exit criteria, and the Android SDK limitation auditable before feature migration. | Flutter `lib/`; React Native scaffold; Phase 1 Completion Record |
 
 ## Results/Takeaways
 
